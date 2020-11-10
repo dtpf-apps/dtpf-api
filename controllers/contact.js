@@ -2,17 +2,17 @@ const Contact = require("../models/contact");
 
 function contactMe(req, res) {
   const contact = new Contact();
-  const { email, name, telefon, message } = req.body;
+  const { email, name, phone_number, message } = req.body;
   contact.email = email.toLowerCase();
   contact.name = name;
-  contact.telefon = telefon;
+  contact.phone_number = phone_number;
   contact.message = message;
   contact.readed = false;
   contact.date = contact.date;
   if (!email && !message) {
     res.status(404).send({
       status: 404,
-      message: "El email y el asunto son obligatorios.",
+      message: "El email y el mensaje son obligatorios.",
     });
   } else if (!email) {
     res.status(404).send({
@@ -22,7 +22,7 @@ function contactMe(req, res) {
   } else if (!message) {
     res.status(404).send({
       status: 404,
-      message: "El asunto es obligatorio.",
+      message: "El mensaje es obligatorio.",
     });
   } else {
     Contact.find({ email: contact.email }, (err, getContact) => {
