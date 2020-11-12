@@ -5,6 +5,7 @@ const ContactSchema = Schema({
     email: String,
     name: String,
     phone_number: String,
+    subject: String,
     message: String,
     readed: Boolean,
     date: { type: Date, default: Date.now }

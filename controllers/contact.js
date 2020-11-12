@@ -2,10 +2,11 @@ const Contact = require("../models/contact");
 
 function contactMe(req, res) {
   const contact = new Contact();
-  const { email, name, phone_number, message } = req.body;
+  const { email, name, phone_number, subject, message } = req.body;
   contact.email = email.toLowerCase();
   contact.name = name;
   contact.phone_number = phone_number;
+  contact.subject = subject;
   contact.message = message;
   contact.readed = false;
   contact.date = contact.date;
