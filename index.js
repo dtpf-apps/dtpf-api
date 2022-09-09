@@ -8,10 +8,8 @@ const server = http.createServer(app);
 const io = socketIo(server);
 let interval;
 io.on("connection", (socket) => {
-  // console.log(socket.conn.server.clientsCount+" usuarios conectados");
-  if (interval) {
-    clearInterval(interval);
-  }
+  console.log(`${socket.conn.server.clientsCount} usuario/s conectados`);
+  getMessagesLength(socket);
   interval = setInterval(() => getMessagesLength(socket), 1000);
   socket.on("disconnect", () => {
     clearInterval(interval);

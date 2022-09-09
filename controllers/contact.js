@@ -136,7 +136,7 @@ function getLastMessageEmail(req, res) {
             if (messagesStored.length === 0) {
               res.status(200).send({ status: 200, message: "Bandeja de entrada vacía."});
             } else {
-              res.status(200).send({ email: messagesStored[0].email });
+              res.status(200).send({ status: 200, email: messagesStored[0].email });
             }
           }
         });

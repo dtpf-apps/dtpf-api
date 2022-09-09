@@ -4,62 +4,43 @@ const Education = require("../models/education");
 const imagemagick = require("imagemagick-native-12");
 
 function addCourse(req, res) {
-  const { page = 1, limit = 10000 } = req.query;
-  const options = {
-    page,
-    limit: parseInt(limit),
-    sort: { date: "desc" },
-  };
-  Education.paginate({}, options, (err, coursesStored) => {
-    if (err) {
-      res.status(500).send({ status: 500, message: "Error del servidor." });
-    } else {
-      if (coursesStored.docs.length === 0) {
-        res
-          .status(404)
-          .send({ status: 404, message: "Error al localizar el anterior curso." });
-      } else {
-        const course = new Education();
-        const { title, description, duration, date, url, platform } = req.body;
-        course.title = title;
-        course.description = description;
-        course.duration = duration;
-        course.date = date ? date : course.date;
-        course.url = url;
-        course.platform = platform;
-        course.order = coursesStored.totalDocs + 1;
-        if (!title) {
-          res.status(404).send({
-            status: 404,
-            message: "Todos los campos son obligatorios.",
-          });
+  const course = new Education();
+  const { title, description, duration, date, url, platform } = req.body;
+  course.title = title;
+  course.description = description;
+  course.duration = duration;
+  course.date = date ? date : course.date;
+  course.url = url;
+  course.platform = platform;
+  if (!title) {
+    res.status(404).send({
+      status: 404,
+      message: "Todos los campos son obligatorios.",
+    });
+  } else {
+    course.save((err, courseStored) => {
+      if (err) {
+        if (err.code === 11000) {
+          res
+            .status(404)
+            .send({ status: 404, message: "Este título ya existe." });
         } else {
-          course.save((err, courseStored) => {
-            if (err) {
-              if (err.code === 11000) {
-                res
-                  .status(404)
-                  .send({ status: 404, message: "Este título ya existe." });
-              } else {
-                res.status(500).send({
-                  status: 500,
-                  message: "Error del servidor, inténtalo más tarde.",
-                });
-              }
-            } else if (!courseStored) {
-              res
-                .status(404)
-                .send({ status: 404, message: "Error al enviar la petición." });
-            } else {
-              res
-                .status(200)
-                .send({ status: 200, message: "Curso creado correctamente." });
-            }
+          res.status(500).send({
+            status: 500,
+            message: "Error del servidor, inténtalo más tarde.",
           });
         }
+      } else if (!courseStored) {
+        res
+          .status(404)
+          .send({ status: 403, message: "Error al enviar la petición." });
+      } else {
+        res
+          .status(200)
+          .send({ status: 200, message: "Curso creado correctamente." });
       }
-    }
-  });
+    });
+  }
 }
 
 function updateCourse(req, res) {
@@ -91,11 +72,11 @@ function updateCourse(req, res) {
 }
 
 function getCourses(req, res) {
-  const {page = 1, limit = 9} = req.query;
+  const { page = 1, limit = 10 } = req.query;
   const options = {
     page,
     limit: parseInt(limit),
-    sort: {date: "desc"}
+    sort: { date: "desc" },
   };
   Education.paginate({}, options, (err, coursesStored) => {
     if (err) {
@@ -116,26 +97,68 @@ function getCourse(req, res) {
   const { url } = req.params;
   Education.findOne({ url }, (err, courseStored) => {
     if (err) {
-      res.status(500).send({status: 500, message: "Error del servidor."});
+      res.status(500).send({ status: 500, message: "Error del servidor." });
     } else if (!courseStored) {
-      res.status(404).send({status: 404, message: "No se ha encontrado el curso."});
+      res
+        .status(404)
+        .send({ status: 404, message: "No se ha encontrado el curso." });
     } else {
-      res.status(200).send({status: 200, course: courseStored});
+      res.status(200).send({ status: 200, course: courseStored });
     }
   });
 }
 
-function getCourseByOrder(req, res) {
-  const { order } = req.params;
-  Education.findOne({ order }, (err, courseStored) => {
-    if (err) {
-      res.status(500).send({status: 500, message: "Error del servidor."});
-    } else if (!courseStored) {
-      res.status(404).send({status: 404, message: "No se ha encontrado el curso."});
-    } else {
-      res.status(200).send({status: 200, course: courseStored});
-    }
-  });
+function getNextCourse(req, res) {
+  const { url } = req.params;
+  Education.find()
+    .sort({ date: "desc" })
+    .exec((err, coursesStored) => {
+      if (err) {
+        res.status(500).send({ status: 500, message: "Error del servidor." });
+      } else {
+        if (!coursesStored) {
+          res.status(404).send({
+            status: 404,
+            message: "No se ha encontrado ningún curso.",
+          });
+        } else {
+          const coursesUrl = [];
+          for (let i = 0; i < coursesStored.length; i++) {
+            coursesUrl.push(coursesStored[i].url);
+          }
+          res
+            .status(200)
+            .send({ status: 200, nextCourse: coursesUrl.cycle(url) });
+        }
+      }
+    });
+}
+
+function getPrevCourse(req, res) {
+  const { url } = req.params;
+  Education.find()
+    .sort({ date: "desc" })
+    .exec((err, coursesStored) => {
+      if (err) {
+        res.status(500).send({ status: 500, message: "Error del servidor." });
+      } else {
+        if (!coursesStored) {
+          res.status(404).send({
+            status: 404,
+            message: "No se ha encontrado ningún curso.",
+          });
+        } else {
+          const coursesUrl = [];
+          for (let i = 0; i < coursesStored.length; i++) {
+            coursesUrl.push(coursesStored[i].url);
+          }
+          const coursesUrlReversed = coursesUrl.reverse();
+          res
+            .status(200)
+            .send({ status: 200, prevCourse: coursesUrlReversed.cycle(url) });
+        }
+      }
+    });
 }
 
 function uploadImage(req, res) {
@@ -158,9 +181,10 @@ function uploadImage(req, res) {
         let fileName = fileSplit[2];
         let extSplit = fileName.split(".");
         let fileExt = extSplit[1];
-
         if (req.files.image.type === null) {
-          res.status(404).send({ status: 404, message: "La imágen es obligatoria." });
+          res
+            .status(404)
+            .send({ status: 404, message: "La imágen es obligatoria." });
         } else if (
           fileExt !== "jpg" &&
           fileExt !== "jpeg" &&
@@ -193,13 +217,16 @@ function uploadImage(req, res) {
                   fs.unlinkSync(filePathThumbOld);
                 }
                 const filePathNew = "./uploads/education/" + fileName;
-                fs.writeFileSync('./uploads/education/thumb_'+ fileName, imagemagick.convert({
+                fs.writeFileSync(
+                  "./uploads/education/thumb_" + fileName,
+                  imagemagick.convert({
                     srcData: fs.readFileSync(filePathNew),
                     width: 340,
                     height: 205,
-                    resizeStyle: 'aspectfill',
-                    gravity: 'Center'
-                  }));
+                    resizeStyle: "aspectfill",
+                    gravity: "Center",
+                  })
+                );
                 res.status(200).send({
                   status: 200,
                   message: "Imágen añadida correctamente.",
@@ -210,7 +237,9 @@ function uploadImage(req, res) {
           );
         }
       } else {
-        res.status(500).send({ status: 404, message: "Ningún archivo subido." });
+        res
+          .status(500)
+          .send({ status: 404, message: "Ningún archivo subido." });
       }
     }
   });
@@ -231,7 +260,6 @@ function getImage(req, res) {
 function addTag(req, res) {
   const params = req.params;
   let courseTag = req.body;
-  
   if (courseTag.length === 0) {
     res.status(400).send({ status: 400, message: "Introduce el tag." });
   } else {
@@ -257,9 +285,10 @@ function addTag(req, res) {
                   .status(500)
                   .send({ status: 500, message: "Error del servidor." });
               } else if (!courseData) {
-                res
-                  .status(404)
-                  .send({ status: 404, message: "No se ha encontrado el curso." });
+                res.status(404).send({
+                  status: 404,
+                  message: "No se ha encontrado el curso.",
+                });
               } else {
                 res
                   .status(200)
@@ -269,9 +298,10 @@ function addTag(req, res) {
           );
         }
       } else {
-        res
-          .status(500)
-          .send({ status: 500, message: "Cannot read property 'tags' of null." });
+        res.status(500).send({
+          status: 500,
+          message: "Cannot read property 'tags' of null.",
+        });
       }
     });
   }
@@ -280,7 +310,6 @@ function addTag(req, res) {
 function deleteTag(req, res) {
   const params = req.params;
   let courseTag = req.body;
-
   Education.findByIdAndUpdate(
     { _id: params.id },
     { $pullAll: courseTag },
@@ -302,7 +331,6 @@ function deleteTag(req, res) {
 
 function deleteCourse(req, res) {
   const params = req.params;
-
   Education.findByIdAndDelete({ _id: params.id }, (err, courseDeleted) => {
     if (err) {
       res.status(500).send({ status: 500, message: "Error del servidor." });
@@ -320,11 +348,18 @@ function deleteCourse(req, res) {
   });
 }
 
+Array.prototype.cycle = function (str) {
+  const i = this.indexOf(str);
+  if (i === -1) return undefined;
+  return this[(i + 1) % this.length];
+};
+
 module.exports = {
   addCourse,
   getCourses,
   getCourse,
-  getCourseByOrder,
+  getNextCourse,
+  getPrevCourse,
   uploadImage,
   addTag,
   updateCourse,
