@@ -18,7 +18,7 @@ io.on("connection", (socket) => {
 mongoose.set("useFindAndModify", false);
 mongoose.set("useCreateIndex", true);
 mongoose.connect(
-  `mongodb://${IP_SERVER}:${PORT_DB}/davidthomaspizarrofrick`,
+  `mongodb://${IP_SERVER}:${PORT_DB}/dtpf`,
   { useNewUrlParser: true, useUnifiedTopology: true },
   (err, res) => {
     if (err) {
