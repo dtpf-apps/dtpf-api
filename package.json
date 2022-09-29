@@ -2,7 +2,7 @@
   "name": "dtpf-portfolio-backend",
   "version": "0.0.1",
   "description": "Backend para portafolio personal",
-  "main": "src/index.js",
+  "main": "index.js",
   "author": "David Thomas Pizarro Frick",
   "license": "MIT",
   "dependencies": {
@@ -21,7 +21,7 @@
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   }
 }
