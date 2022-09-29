@@ -183,14 +183,14 @@ function uploadImage(req, res) {
         let fileExt = extSplit[1];
         if (req.files.image.type === null) {
           res
-            .status(404)
-            .send({ status: 404, message: "La imágen es obligatoria." });
+          .status(404)
+          .send({ status: 404, message: "La imágen es obligatoria." });
         } else if (
           fileExt !== "jpg" &&
           fileExt !== "jpeg" &&
           fileExt !== "JPG" &&
           fileExt !== "png"
-        ) {
+          ) {
           res.status(400).send({
             status: 400,
             message:
