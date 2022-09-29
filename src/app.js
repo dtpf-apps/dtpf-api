@@ -12,6 +12,7 @@ const menuRoutes = require("./routers/menu");
 const contactRoutes = require("./routers/contact");
 const educationRoutes = require("./routers/education");
 const utilsRoutes = require("./routers/utils");
+const aboutMeRoutes = require("./routers/aboutMe");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -35,6 +36,7 @@ app.use(`/api/${API_VERSION}`, menuRoutes);
 app.use(`/api/${API_VERSION}`, contactRoutes);
 app.use(`/api/${API_VERSION}`, educationRoutes);
 app.use(`/api/${API_VERSION}`, utilsRoutes);
+app.use(`/api/${API_VERSION}`, aboutMeRoutes);
 // app.use('/', express.static('client', {redirect: false}));
 // app.get('*', function(req, res, next){
 //   res.sendFile(path.resolve('client/index.html'));
