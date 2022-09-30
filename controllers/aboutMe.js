@@ -1,91 +1,93 @@
 const AboutMe = require("../models/aboutMe");
 
-function addMainInfo(req, res) {
-  const { mainInfo } = req.body;
+function addAboutMeInfo(req, res) {
+  const body = req.body;
   const aboutMe = new AboutMe();
-  aboutMe.id = 1;
-  aboutMe.mainInfo = mainInfo;
-  if (!aboutMe.mainInfo) {
+  aboutMe.title = body.title;
+  aboutMe.content1 = body.content1;
+  aboutMe.content2 = body.content2;
+  aboutMe.content3 = body.content3;
+  aboutMe.content4 = body.content4;
+  aboutMe.content5 = body.content5;
+  aboutMe.content6 = body.content6;
+  if (!aboutMe.title || !aboutMe.content1) {
     res.status(404).send({ status: 404, message: "La información principal es obligatoria." });
   } else {
     aboutMe.save((err, createdMainInfo) => {
       if (err) {
-        res.status(500).send({ status: 500, message: "Error del servidor." });
+        if (err.code === 11000) {
+          res.status(500).send({ status: 500, message: "El título ya existe." });
+        } else {
+          res.status(500).send({ status: 500, message: "Error del servidor." });
+        }
       } else {
         if (!createdMainInfo) {
-          res.status(404).send({ status: 404, message: "Error al crear la información principal." });
+          res
+            .status(404)
+            .send({ status: 404, message: "Error al crear la información principal." });
         } else {
-          res.status(200).send({ status: 200, message: "Información principal creada correctamente." });
+          res.status(200).send({ status: 200, message: "Información creada correctamente." });
         }
       }
     });
   }
 }
 
-function getMainInfo(req, res) {
-  AboutMe.findOne({ id: 1 }).exec((err, mainInfo) => {
+function getAboutMeInfo(req, res) {
+  let params = req.params;
+  AboutMe.findOne({ title: params.title }).exec((err, info) => {
     if (err) {
       res.status(500).send({ status: 500, message: "Error del servidor." });
     } else {
-      if (!mainInfo) {
+      if (!info) {
         res.status(404).send({
           status: 404,
           message: "Error al enviar los parámetros.",
         });
       } else {
-        res.status(200).send({ status: 200, mainInfo: mainInfo.mainInfo });
+        res.status(200).send({ status: 200, info: info });
       }
     }
   });
 }
 
-function updateMainInfo(req, res) {
-  const { newMainInfo } = req.body;
-  AboutMe.findOne({ id: 1 }).exec((err, oldMainInfo) => {
-    if (err) {
-      res.status(500).send({ status: 500, message: "Error del servidor." });
-    } else {
-      if (!oldMainInfo) {
-        res.status(404).send({
-          status: 404,
-          message: "No existe la información principal en la base de datos.",
-        });
-      } else if (!newMainInfo) {
-        res.status(404).send({
-          status: 404,
-          message: "No hay información principal.",
-        });
+function updateAboutMeInfo(req, res) {
+  let params = req.params;
+  const body = req.body;
+  AboutMe.findOneAndUpdate(
+    { title: params.title },
+    {
+      content1: body.content1,
+      content2: body.content2,
+      content3: body.content3,
+      content4: body.content4,
+      content5: body.content5,
+      content6: body.content6,
+    },
+    (err, updatedMainInfo) => {
+      if (err) {
+        res.status(500).send({ status: 500, message: "Error del servidor." });
       } else {
-        AboutMe.findOneAndUpdate(
-          { id: 1 },
-          { mainInfo: newMainInfo },
-          (err, updatedMainInfo) => {
-            if (err) {
-              res
-                .status(500)
-                .send({ status: 500, message: "Error del servidor." });
-            } else {
-              if (!updatedMainInfo) {
-                res
-                  .status(404)
-                  .send({ status: 404, message: "No se ha podido actualizar." });
-              } else {
-                res.status(200).send({
-                  status: 200,
-                  message: "Información principal actualizada correctamente.",
-                  mainInfo: newMainInfo
-                });
-              }
-            }
-          }
-        );
+        if (!updatedMainInfo) {
+          res.status(404).send({ status: 404, message: "No se ha podido actualizar." });
+        } else if (!body.content1) {
+          res.status(404).send({
+            status: 404,
+            message: "El contenido no puede estar vacío.",
+          });
+        } else {
+          res.status(200).send({
+            status: 200,
+            message: "Información principal actualizada correctamente.",
+          });
+        }
       }
     }
-  });
+  );
 }
 
 module.exports = {
-  addMainInfo,
-  getMainInfo,
-  updateMainInfo
+  addAboutMeInfo,
+  getAboutMeInfo,
+  updateAboutMeInfo,
 };
