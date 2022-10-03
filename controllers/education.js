@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const Education = require("../models/education");
-const imagemagick = require("imagemagick-native-12");
+const { Geometry,Image } = require('image-m');
 
 function addCourse(req, res) {
   const course = new Education();
@@ -217,16 +217,10 @@ function uploadImage(req, res) {
                   fs.unlinkSync(filePathThumbOld);
                 }
                 const filePathNew = "./uploads/education/" + fileName;
-                fs.writeFileSync(
-                  "./uploads/education/thumb_" + fileName,
-                  imagemagick.convert({
-                    srcData: fs.readFileSync(filePathNew),
-                    width: 340,
-                    height: 205,
-                    resizeStyle: "aspectfill",
-                    gravity: "Center",
-                  })
-                );
+                const img = new Image();
+                img.read(filePathNew);
+                img.resize(new Geometry(318,191,0,0));
+                img.write("./uploads/education/thumb_" + fileName);
                 res.status(200).send({
                   status: 200,
                   message: "Imágen añadida correctamente.",
@@ -339,6 +333,13 @@ function deleteCourse(req, res) {
         .status(404)
         .send({ status: 404, message: "No se ha encontrado el curso." });
     } else {
+      let image = courseDeleted.image;
+      if (image !== undefined) {
+        let filePathOld = "./uploads/education/" + image;
+        let filePathThumbOld = "./uploads/education/thumb_" + image;
+        fs.unlinkSync(filePathOld);
+        fs.unlinkSync(filePathThumbOld);
+      }
       res.status(200).send({
         status: 200,
         message: "Curso eliminado correctamente.",
