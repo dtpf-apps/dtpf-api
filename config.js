@@ -2,10 +2,12 @@ const API_VERSION = "v1";
 const IP_SERVER = "localhost";
 const PORT_DB = 27018;
 const PORT_SERVER = process.env.PORT || 3998;
+const SECRET_KEY = "secretKey";
 
 module.exports = {
   API_VERSION,
   IP_SERVER,
   PORT_DB,
   PORT_SERVER,
+  SECRET_KEY
 };

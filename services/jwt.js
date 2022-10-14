@@ -1,6 +1,6 @@
 const jwt = require("jwt-simple");
 const moment = require("moment");
-const SECRET_KEY = "dssdf5d4fOKKOK5sd6fh8fg4rgFGDHthXf98g4ttsDAdeffsg";
+const { SECRET_KEY } = require("../config");
 
 exports.createAccessToken = function (user) {
   const payload = {
@@ -10,7 +10,7 @@ exports.createAccessToken = function (user) {
     email: user.email,
     role: user.role,
     createToken: moment().unix(),
-    exp: moment().add(3, "hours").unix()
+    exp: moment().add(3, "hours").unix(),
   };
   return jwt.encode(payload, SECRET_KEY);
 };
@@ -18,7 +18,7 @@ exports.createAccessToken = function (user) {
 exports.createRefreshToken = function (user) {
   const payload = {
     id: user._id,
-    exp: moment().add(1, "days").unix()
+    exp: moment().add(3, "hours").unix(),
   };
   return jwt.encode(payload, SECRET_KEY);
 };

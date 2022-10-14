@@ -1,12 +1,10 @@
 const jwt = require("jwt-simple");
 const moment = require("moment");
-const SECRET_KEY = "dssdf5d4fOKKOK5sd6fh8fg4rgFGDHthXf98g4ttsDAdeffsg";
+const { SECRET_KEY } = require("../config");
 
 exports.ensureAuth = (req, res, next) => {
   if (!req.headers.authorization) {
-    return res
-      .status(403)
-      .send({ message: "La petición no tiene cabecera de autentificación." });
+    return res.status(403).send({ message: "La petición no tiene cabecera de autentificación." });
   }
   const token = req.headers.authorization.replace(/['"]+/g, "");
   try {
