@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const Education = require("../models/education");
-const { Geometry,Image } = require('image-m');
+// const { Geometry,Image } = require('image-m');
 
 function addCourse(req, res) {
   const course = new Education();
@@ -183,14 +183,14 @@ function uploadImage(req, res) {
         let fileExt = extSplit[1];
         if (req.files.image.type === null) {
           res
-          .status(404)
-          .send({ status: 404, message: "La imágen es obligatoria." });
+            .status(404)
+            .send({ status: 404, message: "La imágen es obligatoria." });
         } else if (
           fileExt !== "jpg" &&
           fileExt !== "jpeg" &&
           fileExt !== "JPG" &&
           fileExt !== "png"
-          ) {
+        ) {
           res.status(400).send({
             status: 400,
             message:
@@ -217,15 +217,22 @@ function uploadImage(req, res) {
                   fs.unlinkSync(filePathThumbOld);
                 }
                 const filePathNew = "./uploads/education/" + fileName;
-                const img = new Image();
-                img.read(filePathNew);
-                img.resize(new Geometry(318,191,0,0));
-                img.write("./uploads/education/thumb_" + fileName);
-                res.status(200).send({
-                  status: 200,
-                  message: "Imágen añadida correctamente.",
-                  image: fileName,
-                });
+                sharp(filePathNew)
+                  .resize(318, 191)
+                  .toFile("./uploads/education/thumb_" + fileName, (err) => {
+                    if (err) {
+                      res.status(500).send({
+                        status: 500,
+                        message: "Error al procesar la imagen.",
+                      });
+                    } else {
+                      res.status(200).send({
+                        status: 200,
+                        message: "Imágen añadida correctamente.",
+                        image: fileName,
+                      });
+                    }
+                  });
               }
             }
           );

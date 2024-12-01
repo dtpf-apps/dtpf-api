@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const path = require('path');
+const path = require("path");
 
 const app = express();
 const { API_VERSION } = require("./config");
@@ -14,7 +14,7 @@ const educationRoutes = require("./routers/education");
 const utilsRoutes = require("./routers/utils");
 const aboutMeRoutes = require("./routers/aboutMe");
 
-app.disable('x-powered-by');
+app.disable("x-powered-by");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -38,9 +38,14 @@ app.use(`/api/${API_VERSION}`, contactRoutes);
 app.use(`/api/${API_VERSION}`, educationRoutes);
 app.use(`/api/${API_VERSION}`, utilsRoutes);
 app.use(`/api/${API_VERSION}`, aboutMeRoutes);
-// app.use('/', express.static('client', {redirect: false}));
-// app.get('*', function(req, res, next){
-//   res.sendFile(path.resolve('client/index.html'));
-// });
+if (process.env.NODE_ENV === "production") {
+  app.get("/client/service-worker.js", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "service-worker.js"));
+  });
+  app.use("/", express.static("client", { redirect: false }));
+  app.get("*", function (req, res, next) {
+    res.sendFile(path.resolve("client/index.html"));
+  });
+}
 
 module.exports = app;

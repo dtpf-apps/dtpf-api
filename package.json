@@ -2,7 +2,7 @@
   "name": "dtpf-portfolio-backend",
   "version": "0.0.1",
   "description": "Backend para portafolio personal",
-  "main": "index.js",
+  "main": "src/index.js",
   "author": "David Thomas Pizarro Frick",
   "license": "MIT",
   "dependencies": {
@@ -10,18 +10,19 @@
     "body-parser": "^1.19.0",
     "connect-multiparty": "^2.2.0",
     "express": "^4.17.1",
-    "image-m": "^0.1.14",
     "jwt-simple": "^0.5.6",
     "moment": "^2.29.1",
     "mongoose": "^5.10.14",
     "mongoose-paginate-v2": "^1.3.11",
+    "sharp": "^0.33.5",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "db": "docker start dtpf-mongodb"
   }
 }
