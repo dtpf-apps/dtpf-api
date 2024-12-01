@@ -1,9 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
-
 const app = express();
-const { API_VERSION } = require("./config");
+const config = require("../src/config/config");
 
 // Load routings
 const authRoutes = require("./routers/auth");
@@ -31,13 +30,13 @@ app.use((req, res, next) => {
 });
 
 // Router Basic
-app.use(`/api/${API_VERSION}`, authRoutes);
-app.use(`/api/${API_VERSION}`, userRoutes);
-app.use(`/api/${API_VERSION}`, menuRoutes);
-app.use(`/api/${API_VERSION}`, contactRoutes);
-app.use(`/api/${API_VERSION}`, educationRoutes);
-app.use(`/api/${API_VERSION}`, utilsRoutes);
-app.use(`/api/${API_VERSION}`, aboutMeRoutes);
+app.use(`/api/${config.app.API_VERSION}`, authRoutes);
+app.use(`/api/${config.app.API_VERSION}`, userRoutes);
+app.use(`/api/${config.app.API_VERSION}`, menuRoutes);
+app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
+app.use(`/api/${config.app.API_VERSION}`, educationRoutes);
+app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
+app.use(`/api/${config.app.API_VERSION}`, aboutMeRoutes);
 if (process.env.NODE_ENV === "production") {
   app.get("/client/service-worker.js", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "service-worker.js"));

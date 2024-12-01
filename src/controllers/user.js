@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const bcrypt = require("bcrypt-nodejs");
+const bcrypt = require("bcrypt");
 const jwt = require("../services/jwt");
 const User = require("../models/user");
 

@@ -1,6 +1,6 @@
 const jwt = require("jwt-simple");
 const moment = require("moment");
-const { SECRET_KEY } = require("../config");
+const config = require("../config/config");
 
 exports.ensureAuth = (req, res, next) => {
   if (!req.headers.authorization) {
@@ -8,7 +8,7 @@ exports.ensureAuth = (req, res, next) => {
   }
   const token = req.headers.authorization.replace(/['"]+/g, "");
   try {
-    var payload = jwt.decode(token, SECRET_KEY);
+    var payload = jwt.decode(token, config.app.SECRET_KEY);
     if (payload.exp <= moment.unix()) {
       return res.status(404).send({ message: "El token ha expirado." });
     }
