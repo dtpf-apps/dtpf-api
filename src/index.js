@@ -9,7 +9,7 @@ const config = require("../src/config/config");
 
 let interval;
 io.on("connection", (socket) => {
-  console.log(`${socket.conn.server.clientsCount} usuario/s conectados`);
+  console.log(`${socket.conn.server.clientsCount} usuarioooo/s conectados`);
   getMessagesLength(socket);
   interval = setInterval(() => getMessagesLength(socket), 5000);
   socket.on("disconnect", () => {
