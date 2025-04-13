@@ -12,7 +12,7 @@ const CONFIG = {
       SECRET_KEY: process.env.SECRET_KEY,
     },
     db: {
-      MONGO_URL: `mongodb://${process.env.IP_SERVER}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
+      MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
       PORT_MONGO_DB: process.env.PORT_MONGO_DB || 27019,
     },
   },
@@ -24,7 +24,8 @@ const CONFIG = {
       SECRET_KEY: process.env.SECRET_KEY,
     },
     db: {
-      MONGO_URL: `mongodb://${process.env.DB_USER_PASSWORD}@${process.env.IP_SERVER}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}?authSource=admin`,
+      MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
+      // MONGO_URL: `mongodb://${process.env.DB_USER_PASSWORD}@${process.env.IP_SERVER}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}?authSource=admin`,
       PORT_MONGO_DB: process.env.PORT_MONGO_DB || 27018,
     },
   },
