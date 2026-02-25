@@ -1,4 +1,4 @@
-const Contact = require("../models/contact");
+const Contact = require('../models/contact');
 
 function contactMe(req, res) {
   const contact = new Contact();
@@ -13,17 +13,17 @@ function contactMe(req, res) {
   if (!email && !message) {
     res.status(404).send({
       status: 404,
-      message: "El email y el mensaje son obligatorios.",
+      message: 'El email y el mensaje son obligatorios.',
     });
   } else if (!email) {
     res.status(404).send({
       status: 404,
-      message: "El email es obligatorio.",
+      message: 'El email es obligatorio.',
     });
   } else if (!message) {
     res.status(404).send({
       status: 404,
-      message: "El mensaje es obligatorio.",
+      message: 'El mensaje es obligatorio.',
     });
   } else {
     Contact.find({ email: contact.email }, (err, getContact) => {
@@ -32,44 +32,31 @@ function contactMe(req, res) {
       if (err) {
         return res.status(500).send({
           status: 500,
-          message: "Error al hacer la consulta con la base de datos.",
+          message: 'Error al hacer la consulta con la base de datos.',
         });
       } else if (!getLastContact) {
         contact.save((err, contactStored) => {
           if (err) {
-            return res
-              .status(500)
-              .send({ status: 500, message: "Error del servidor." });
+            return res.status(500).send({ status: 500, message: 'Error del servidor.' });
           } else if (!contactStored) {
-            return res
-              .status(404)
-              .send({ status: 404, message: "Error al enviar la petición." });
+            return res.status(404).send({ status: 404, message: 'Error al enviar la petición.' });
           } else {
-            return res
-              .status(200)
-              .send({ status: 200, contact: contactStored });
+            return res.status(200).send({ status: 200, contact: contactStored });
           }
         });
       } else if (getLastContact.readed === false) {
         return res.status(404).send({
           status: 404,
-          message:
-            "Hasta que no lea el último mensaje que has enviado no puedes enviar más.",
+          message: 'Hasta que no lea el último mensaje que has enviado no puedes enviar más.',
         });
       } else {
         contact.save((err, contactStored) => {
           if (err) {
-            return res
-              .status(500)
-              .send({ status: 500, message: "Error del servidor." });
+            return res.status(500).send({ status: 500, message: 'Error del servidor.' });
           } else if (!contactStored) {
-            return res
-              .status(404)
-              .send({ status: 404, message: "Error al enviar la petición." });
+            return res.status(404).send({ status: 404, message: 'Error al enviar la petición.' });
           } else {
-            return res
-              .status(200)
-              .send({ status: 200, contact: contactStored });
+            return res.status(200).send({ status: 200, contact: contactStored });
           }
         });
       }
@@ -80,31 +67,31 @@ function contactMe(req, res) {
 function getMessagesUnread(req, res) {
   const query = req.query;
   Contact.find({ readed: query.readed })
-        .sort({ date: "desc"})
-        .exec((err, messagesStored) => {
-          if(err) {
-            res.status(500).send({ status: 500, message: "Error del servidor." });
-          } else if (!messagesStored) {
-            res.status(404).send({ status: 404, message: "No hay mensajes en la base de datos." });
-          } else {
-            res.status(200).send({ status: 200, messages: messagesStored });
-          }
-        });
+    .sort({ date: 'desc' })
+    .exec((err, messagesStored) => {
+      if (err) {
+        res.status(500).send({ status: 500, message: 'Error del servidor.' });
+      } else if (!messagesStored) {
+        res.status(404).send({ status: 404, message: 'No hay mensajes en la base de datos.' });
+      } else {
+        res.status(200).send({ status: 200, messages: messagesStored });
+      }
+    });
 }
 
 function checkMessage(req, res) {
   const { id } = req.params;
-  const { readed } = req.body;  
-  Contact.findByIdAndUpdate(id, {readed}, (err, messageChecked) => {
+  const { readed } = req.body;
+  Contact.findByIdAndUpdate(id, { readed }, (err, messageChecked) => {
     if (err) {
-      res.status(500).send({ status: 500, message: "Error del servidor."} );
+      res.status(500).send({ status: 500, message: 'Error del servidor.' });
     } else if (!messageChecked) {
-      res.status(404).send({ status: 404, message: "No se ha encontrado el mensaje." });
+      res.status(404).send({ status: 404, message: 'No se ha encontrado el mensaje.' });
     } else {
       if (readed === true) {
-        res.status(200).send({ status: 200, message: "Mensaje marcado como leído." });
+        res.status(200).send({ status: 200, message: 'Mensaje marcado como leído.' });
       } else {
-        res.status(200).send({ status: 200, message: "Mensaje sacado de la bandeja de leídos." });
+        res.status(200).send({ status: 200, message: 'Mensaje sacado de la bandeja de leídos.' });
       }
     }
   });
@@ -113,38 +100,38 @@ function checkMessage(req, res) {
 function deleteMessage(req, res) {
   const { id } = req.params;
   Contact.findByIdAndRemove(id, (err, messageDelete) => {
-    if(err) {
-      res.status(500).send({ status: 500, message: "Error del servidor." });
+    if (err) {
+      res.status(500).send({ status: 500, message: 'Error del servidor.' });
     } else if (!messageDelete) {
-      res.status(404).send({ status: 404, message: "Mensaje no encontrado en la base de datos." });
+      res.status(404).send({ status: 404, message: 'Mensaje no encontrado en la base de datos.' });
     } else {
-      res.status(200).send({ status: 200, message: "Mensaje eliminado correctamente." })
+      res.status(200).send({ status: 200, message: 'Mensaje eliminado correctamente.' });
     }
   });
 }
 
 function getLastMessageEmail(req, res) {
   Contact.find({ readed: false })
-        .sort({ date: "desc"})
-        .exec((err, messagesStored) => {
-          if(err) {
-            console.log(err);
-            res.status(500).send({ status: 500, message: "Error del servidor." });
-          } else if (!messagesStored) {
-            res.status(404).send({ status: 404, message: "No hay mensajes en la base de datos." });
-          } else {
-            if (messagesStored.length === 0) {
-              res.status(200).send({ status: 200, message: "Bandeja de entrada vacía."});
-            } else {
-              res.status(200).send({ status: 200, email: messagesStored[0].email });
-            }
-          }
-        });
+    .sort({ date: 'desc' })
+    .exec((err, messagesStored) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send({ status: 500, message: 'Error del servidor.' });
+      } else if (!messagesStored) {
+        res.status(404).send({ status: 404, message: 'No hay mensajes en la base de datos.' });
+      } else {
+        if (messagesStored.length === 0) {
+          res.status(200).send({ status: 200, message: 'Bandeja de entrada vacía.' });
+        } else {
+          res.status(200).send({ status: 200, email: messagesStored[0].email });
+        }
+      }
+    });
 }
 module.exports = {
   contactMe,
   getMessagesUnread,
   checkMessage,
   deleteMessage,
-  getLastMessageEmail
+  getLastMessageEmail,
 };

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const MenuSchema = Schema({
@@ -8,4 +8,4 @@ const MenuSchema = Schema({
   active: Boolean,
 });
 
-module.exports = mongoose.model("Menu", MenuSchema);
+module.exports = mongoose.model('Menu', MenuSchema);

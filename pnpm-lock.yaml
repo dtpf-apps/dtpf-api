@@ -45,6 +45,9 @@ importers:
       nodemon:
         specifier: ^3.1.9
         version: 3.1.9
+      prettier:
+        specifier: ^3.4.2
+        version: 3.8.1
 
 packages:
 
@@ -774,6 +777,11 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
+
+  prettier@3.8.1:
+    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
@@ -1766,6 +1774,8 @@ snapshots:
   path-to-regexp@0.1.10: {}
 
   picomatch@2.3.1: {}
+
+  prettier@3.8.1: {}
 
   process-nextick-args@2.0.1: {}
 

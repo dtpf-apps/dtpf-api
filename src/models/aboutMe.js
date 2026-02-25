@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const AboutMeSchema = Schema({
@@ -14,4 +14,4 @@ const AboutMeSchema = Schema({
   content6: String,
 });
 
-module.exports = mongoose.model("AboutMe", AboutMeSchema);
+module.exports = mongoose.model('AboutMe', AboutMeSchema);

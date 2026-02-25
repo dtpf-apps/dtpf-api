@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const UtilsSchema = Schema({
@@ -10,4 +10,4 @@ const UtilsSchema = Schema({
   indexedDBVersion: Number,
 });
 
-module.exports = mongoose.model("Utils", UtilsSchema);
+module.exports = mongoose.model('Utils', UtilsSchema);

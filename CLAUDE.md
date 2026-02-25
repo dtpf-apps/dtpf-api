@@ -4,17 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Backend for the dtpf.es personal portfolio website. Built with Node.js 16, Express 4, MongoDB 5 (Mongoose 5), and Socket.io 2 for real-time features. Pure JavaScript (no TypeScript). Deployed at https://dtpf.es. Package manager: **npm**.
+Backend for the dtpf.es personal portfolio website. Built with Node.js 16, Express 4, MongoDB 5 (Mongoose 5), and Socket.io 2 for real-time features. Pure JavaScript (no TypeScript). Deployed at https://dtpf.es. Package manager: **pnpm**.
 
 ## Commands
 
 ```bash
-npm run dev      # Start dev server (NODE_ENV=development, uses nodemon, port 3998)
-npm run start    # Start production server (NODE_ENV=production, port 3998)
-npm run db       # Start local MongoDB Docker container (dtpf-mongodb, port 27019)
+pnpm db          # Start local MongoDB Docker container (dtpf-mongodb, port 27019)
+pnpm dev         # Start dev server (NODE_ENV=development, uses nodemon, port 3998)
+pnpm start       # Start production server (NODE_ENV=production, port 3998)
+pnpm format      # Prettier
 ```
 
-No test framework, linter, or formatter is configured.
+No test framework or linter is configured.
 
 ## Architecture
 

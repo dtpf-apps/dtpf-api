@@ -1,6 +1,6 @@
-const jwt = require("../services/jwt");
-const moment = require("moment");
-const User = require("../models/user");
+const jwt = require('../services/jwt');
+const moment = require('moment');
+const User = require('../models/user');
 
 function willExpireToken(token) {
   const { exp } = jwt.decodedToken(token);
@@ -14,21 +14,21 @@ function willExpireToken(token) {
 function refreshAccessToken(req, res) {
   const { refreshToken } = req.body;
   const isTokenExpired = willExpireToken(refreshToken);
-  
+
   if (isTokenExpired) {
-    res.status(404).send({ message: "El refreshToken ha expirado." });
+    res.status(404).send({ message: 'El refreshToken ha expirado.' });
   } else {
     const { id } = jwt.decodedToken(refreshToken);
     User.findOne({ _id: id }, (err, userStored) => {
       if (err) {
-        res.status(500).send({ message: "Error del servidor." });
+        res.status(500).send({ message: 'Error del servidor.' });
       } else {
         if (!userStored) {
-          res.status(404).send({ message: "Usuario no encontrado." });
+          res.status(404).send({ message: 'Usuario no encontrado.' });
         } else {
           res.status(200).send({
-              accessToken: jwt.createAccessToken(userStored),
-              refreshToken: refreshToken
+            accessToken: jwt.createAccessToken(userStored),
+            refreshToken: refreshToken,
           });
         }
       }

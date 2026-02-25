@@ -1,8 +1,8 @@
-const fs = require("fs");
-const path = require("path");
-const bcrypt = require("bcrypt");
-const jwt = require("../services/jwt");
-const User = require("../models/user");
+const fs = require('fs');
+const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('../services/jwt');
+const User = require('../models/user');
 
 function signUp(req, res) {
   const user = new User();
@@ -10,37 +10,33 @@ function signUp(req, res) {
   user.name = name;
   user.lastname = lastname;
   user.email = email.toLowerCase();
-  user.role = "editor";
+  user.role = 'editor';
   user.active = false;
 
   if (!password || !repeatPassword) {
-    res.status(404).send({ message: "Las contraseñas son obligatorias." });
+    res.status(404).send({ message: 'Las contraseñas son obligatorias.' });
   } else {
     if (password !== repeatPassword) {
-      res
-        .status(404)
-        .send({ message: "Las contraseñas tienen que ser iguales." });
+      res.status(404).send({ message: 'Las contraseñas tienen que ser iguales.' });
     } else {
       try {
         const hash = bcrypt.hashSync(password, 10);
         if (!hash) {
-          return res
-            .status(500)
-            .send({ message: "Error al encriptar la contraseña." });
+          return res.status(500).send({ message: 'Error al encriptar la contraseña.' });
         }
         user.password = hash;
         user.save((err, userStored) => {
           if (err) {
-            res.status(400).send({ message: "El usuario ya existe." });
+            res.status(400).send({ message: 'El usuario ya existe.' });
           } else {
             if (!userStored) {
-              res.status(404).send({ message: "Error al crear el usuario." });
+              res.status(404).send({ message: 'Error al crear el usuario.' });
             } else {
               function registerDelay() {
                 userStored.password = undefined;
                 userStored.__v = undefined;
                 res.status(200).send({
-                  message: "Usuario creado correctamente.",
+                  message: 'Usuario creado correctamente.',
                   user: userStored,
                 });
               }
@@ -49,7 +45,7 @@ function signUp(req, res) {
           }
         });
       } catch (error) {
-        res.status(500).send({ message: "Error del servidor en bcrypt." });
+        res.status(500).send({ message: 'Error del servidor en bcrypt.' });
       }
     }
   }
@@ -62,24 +58,22 @@ function signIn(req, res) {
 
   User.findOne({ email }, (err, userStored) => {
     if (err) {
-      res.status(500).send({ message: "Error del servidor." });
+      res.status(500).send({ message: 'Error del servidor.' });
     } else {
       if (!userStored) {
-        res.status(404).send({ message: "Usuario no encontrado." });
+        res.status(404).send({ message: 'Usuario no encontrado.' });
       } else {
         bcrypt.compare(password, userStored.password, (err, check) => {
           if (err) {
-            res.status(500).send({ message: "Error del servidor." });
+            res.status(500).send({ message: 'Error del servidor.' });
           } else if (!check) {
             function loginDelay() {
-              res.status(404).send({ message: "La contraseña es incorrecta." });
+              res.status(404).send({ message: 'La contraseña es incorrecta.' });
             }
             setTimeout(loginDelay, 5000);
           } else {
             if (!userStored.active) {
-              res
-                .status(200)
-                .send({ message: "El usuario no se ha activado." });
+              res.status(200).send({ message: 'El usuario no se ha activado.' });
             } else {
               res.status(200).send({
                 accessToken: jwt.createAccessToken(userStored),
@@ -96,7 +90,7 @@ function signIn(req, res) {
 function getUsers(req, res) {
   User.find().then((users) => {
     if (!users) {
-      res.status(404).send({ message: "No se ha encontrado ningún usuario." });
+      res.status(404).send({ message: 'No se ha encontrado ningún usuario.' });
     } else {
       res.status(200).send({
         users: users.map((user) => {
@@ -114,58 +108,48 @@ function uploadAvatar(req, res) {
 
   User.findById({ _id: params.id }, (err, userData) => {
     if (err) {
-      res.status(500).send({ message: "Error del servidor." });
+      res.status(500).send({ message: 'Error del servidor.' });
     } else {
       if (!userData) {
         res.status(404).send({
-          message: "No se ha encontrado ningún usuario.",
+          message: 'No se ha encontrado ningún usuario.',
         });
       } else {
         let user = userData;
         const avatarNameOld = user.avatar;
-        const filePathOld = "./uploads/avatar/" + avatarNameOld;
+        const filePathOld = './uploads/avatar/' + avatarNameOld;
         if (req.files.avatar) {
           let filePath = req.files.avatar.path;
-          let fileSplit = filePath.split("/");
+          let fileSplit = filePath.split('/');
           let fileName = fileSplit[2];
-          let extSplit = fileName.split(".");
+          let extSplit = fileName.split('.');
           let fileExt = extSplit[1];
 
-          if (
-            fileExt !== "png" &&
-            fileExt !== "jpg" &&
-            fileExt !== "jpeg" &&
-            fileExt !== "JPG"
-          ) {
+          if (fileExt !== 'png' && fileExt !== 'jpg' && fileExt !== 'jpeg' && fileExt !== 'JPG') {
             res.status(400).send({
-              message:
-                "La extensión de la imagen no es válida. (Extensiones permitidas: .png y .jpg)",
+              message: 'La extensión de la imagen no es válida. (Extensiones permitidas: .png y .jpg)',
             });
           } else {
             user.avatar = fileName;
-            User.findByIdAndUpdate(
-              { _id: params.id },
-              user,
-              (err, userResult) => {
-                if (err) {
-                  res.status(500).send({ message: "Error del servidor." });
+            User.findByIdAndUpdate({ _id: params.id }, user, (err, userResult) => {
+              if (err) {
+                res.status(500).send({ message: 'Error del servidor.' });
+              } else {
+                if (!userResult) {
+                  res.status(404).send({
+                    message: 'No se ha encontrado ningún usuario.',
+                  });
                 } else {
-                  if (!userResult) {
-                    res.status(404).send({
-                      message: "No se ha encontrado ningún usuario.",
-                    });
-                  } else {
-                    if (avatarNameOld !== undefined) {
-                      fs.unlinkSync(filePathOld);
-                    }
-                    res.status(200).send({ avatarName: fileName });
+                  if (avatarNameOld !== undefined) {
+                    fs.unlinkSync(filePathOld);
                   }
+                  res.status(200).send({ avatarName: fileName });
                 }
               }
-            );
+            });
           }
         } else {
-          res.status(404).send({ message: "Sube la imágen." });
+          res.status(404).send({ message: 'Sube la imágen.' });
         }
       }
     }
@@ -174,11 +158,11 @@ function uploadAvatar(req, res) {
 
 function getAvatar(req, res) {
   const avatarName = req.params.avatarName;
-  const filePath = "./uploads/avatar/" + avatarName;
+  const filePath = './uploads/avatar/' + avatarName;
 
   fs.exists(filePath, (exists) => {
     if (!exists) {
-      res.status(404).send({ message: "El avatar que buscas no existe." });
+      res.status(404).send({ message: 'El avatar que buscas no existe.' });
     } else {
       res.sendFile(path.resolve(filePath));
     }
@@ -195,43 +179,37 @@ async function updateUser(req, res) {
 
   if (userData.password && userData.repeatPassword) {
     if (userData.password !== userData.repeatPassword) {
-      res
-        .status(404)
-        .send({ message: "Las contraseñas tienen que ser iguales." });
+      res.status(404).send({ message: 'Las contraseñas tienen que ser iguales.' });
       return;
     }
     try {
       const hash = bcrypt.hashSync(userData.password, 10);
       if (!hash) {
-        return res
-          .status(500)
-          .send({ message: "Error al encriptar la contraseña." });
+        return res.status(500).send({ message: 'Error al encriptar la contraseña.' });
       }
       userData.password = hash;
       delete userData.repeatPassword;
     } catch (error) {
-      res.status(500).send({ message: "Error del servidor en bcrypt." });
+      res.status(500).send({ message: 'Error del servidor en bcrypt.' });
     }
   }
 
   User.findByIdAndUpdate({ _id: params.id }, userData, (err, userUpdate) => {
     if (err) {
-      if (err.codeName === "DuplicateKey") {
+      if (err.codeName === 'DuplicateKey') {
         res.status(500).send({
-          message: "Este email ya existe en la base de datos.",
+          message: 'Este email ya existe en la base de datos.',
         });
       } else {
-        res.status(500).send({ message: "Error del servidor." });
+        res.status(500).send({ message: 'Error del servidor.' });
       }
     } else {
       if (!userUpdate) {
         res.status(404).send({
-          message: "No se ha encontrado ningún usuario.",
+          message: 'No se ha encontrado ningún usuario.',
         });
       } else {
-        res
-          .status(200)
-          .send({ message: "Usuario actualizado correctamente." });
+        res.status(200).send({ message: 'Usuario actualizado correctamente.' });
       }
     }
   });
@@ -243,21 +221,17 @@ function activateUser(req, res) {
 
   User.findByIdAndUpdate(id, { active }, (err, userStored) => {
     if (err) {
-      res.status(500).send({ status: 500, message: "Error del servidor." });
+      res.status(500).send({ status: 500, message: 'Error del servidor.' });
     } else {
       if (!userStored) {
-        res
-          .status(404)
-          .send({ status: 404, message: "No se ha encontrado el usuario." });
+        res.status(404).send({ status: 404, message: 'No se ha encontrado el usuario.' });
       } else {
         if (active === true) {
-          res
-            .status(200)
-            .send({ status: 200, message: "Usuario activado correctamente." });
+          res.status(200).send({ status: 200, message: 'Usuario activado correctamente.' });
         } else {
           res.status(200).send({
             status: 200,
-            message: "Usuario desactivado correctamente.",
+            message: 'Usuario desactivado correctamente.',
           });
         }
       }
@@ -270,20 +244,18 @@ function deleteUser(req, res) {
 
   User.findByIdAndRemove(id, (err, userDelete) => {
     if (err) {
-      res.status(500).send({ status: 500, message: "Error del servidor." });
+      res.status(500).send({ status: 500, message: 'Error del servidor.' });
     } else {
       if (!userDelete) {
-        res
-          .status(404)
-          .send({ status: 404, message: "Usuario no encontrado." });
+        res.status(404).send({ status: 404, message: 'Usuario no encontrado.' });
       } else {
         res.status(200).send({
           status: 200,
-          message: "El usuario ha sido eliminado correctamente.",
+          message: 'El usuario ha sido eliminado correctamente.',
         });
         let avatarPath = userDelete.avatar;
         if (avatarPath !== undefined) {
-          let filePathToDelete = "./uploads/avatar/" + avatarPath;
+          let filePathToDelete = './uploads/avatar/' + avatarPath;
           fs.unlinkSync(filePathToDelete);
         }
       }
@@ -302,31 +274,23 @@ function signUpAdmin(req, res) {
   user.active = true;
 
   if (!password) {
-    res
-      .status(500)
-      .send({ message: "La contraseña es obligatoria.", status: 500 });
+    res.status(500).send({ message: 'La contraseña es obligatoria.', status: 500 });
   } else {
     bcrypt.hash(password, null, null, (err, hash) => {
       if (err) {
-        res
-          .status(500)
-          .send({ message: "Error al encriptar la contraseña.", status: 500 });
+        res.status(500).send({ message: 'Error al encriptar la contraseña.', status: 500 });
       } else {
         user.password = hash;
         user.save((err, userStored) => {
           if (err) {
-            res
-              .status(500)
-              .send({ message: "El usuario ya existe.", status: 500 });
+            res.status(500).send({ message: 'El usuario ya existe.', status: 500 });
           } else {
             if (!userStored) {
-              res
-                .status(500)
-                .send({ message: "Error al crear el usuario.", status: 500 });
+              res.status(500).send({ message: 'Error al crear el usuario.', status: 500 });
             } else {
               res.status(200).send({
                 user: userStored,
-                message: "Usuario creado correctamente.",
+                message: 'Usuario creado correctamente.',
                 status: 200,
               });
             }
