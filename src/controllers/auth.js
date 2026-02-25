@@ -14,6 +14,7 @@ function willExpireToken(token) {
 function refreshAccessToken(req, res) {
   const { refreshToken } = req.body;
   const isTokenExpired = willExpireToken(refreshToken);
+  
   if (isTokenExpired) {
     res.status(404).send({ message: "El refreshToken ha expirado." });
   } else {

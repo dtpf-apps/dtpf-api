@@ -9,7 +9,7 @@ const UserSchema = Schema({
     type: String,
   },
   password: String,
-  role: String,
+  role: { type: String, enum: ['admin', 'editor', 'reviewer'] },
   active: Boolean,
   avatar: String
 });
