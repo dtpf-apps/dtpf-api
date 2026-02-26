@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Backend for the dtpf.es personal portfolio website. Built with Node.js 16, Express 4, MongoDB 5 (Mongoose 5), and Socket.io 2 for real-time features. Pure JavaScript (no TypeScript). Deployed at https://dtpf.es. Package manager: **pnpm**.
+Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 4, TypeScript, MongoDB (Mongoose 9), and Socket.io 4 for real-time features. Deployed at https://dtpf.es. Package manager: **pnpm**.
 
 ## Commands
 
 ```bash
 pnpm db          # Start local MongoDB Docker container (dtpf-mongodb, port 27019)
-pnpm dev         # Start dev server (NODE_ENV=development, uses nodemon, port 3998)
-pnpm start       # Start production server (NODE_ENV=production, port 3998)
+pnpm dev         # tsc --watch + nodemon (NODE_ENV=development, port 3998)
+pnpm build       # Compile TypeScript to dist/
+pnpm start       # Start production server (NODE_ENV=production)
 pnpm format      # Prettier
 ```
 
@@ -19,37 +20,31 @@ No test framework or linter is configured.
 
 ## Architecture
 
-Standard MVC pattern with Express:
+Standard MVC pattern with Express + TypeScript:
 
-- **Entry**: `src/index.js` creates HTTP server with Socket.io, connects to MongoDB via Mongoose
-- **App**: `src/app.js` configures Express with body-parser, CORS headers, and all route registrations. In production mode, serves the frontend from `client/` as static files with SPA catch-all routing.
+- **Entry**: `src/index.ts` connects to MongoDB via async/await, creates HTTP server with Socket.io 4
+- **App**: `src/app.ts` configures Express with `express.json()`, CORS headers, error middleware, and all route registrations. In production mode, serves the frontend from `client/` as static files with SPA catch-all routing.
+- **Interfaces** (`src/interfaces/`): TypeScript interfaces for all models (`IUser`, `IContact`, `IEducation`, `IMenu`, `IAboutMe`, `IUtils`), config, and auth/JWT types. Barrel export via `index.ts`.
 - **Routers** (`src/routers/`): Define API routes under `/api/v1/`, apply middleware
-- **Controllers** (`src/controllers/`): Business logic, predominantly callback-based async style (some `.then()` calls)
-- **Models** (`src/models/`): Mongoose schemas (User, Contact, Menu, Education, AboutMe, Utils)
-- **Middleware** (`src/middlewares/authenticated.js`): JWT token validation via `ensureAuth`
-- **Services** (`src/services/jwt.js`): Token creation (accessToken + refreshToken, 24h expiry) using jwt-simple
-- **Config** (`src/config/config.js`): Loads `.env.development` or `.env.production` based on NODE_ENV. Separate config objects for dev/prod with different MongoDB port defaults (dev: 27019, prod: 27018).
-- **Constants** (`src/utils/constants.js`): Role constants (`admin`, `user`) and stage constants (`development`, `production`)
-- **WebSockets** (`src/webSockets.js`): Socket.io handler that polls unread Contact messages count every 5 seconds
+- **Controllers** (`src/controllers/`): Business logic using async/await throughout
+- **Models** (`src/models/`): Typed Mongoose schemas with `Schema<IDocument>` generics
+- **Middleware** (`src/middlewares/authenticated.ts`): JWT token validation via `ensureAuth`. Error middleware in `error.middleware.ts`.
+- **Services** (`src/services/jwt.ts`): Token creation (accessToken + refreshToken, 24h expiry) using jwt-simple
+- **Config** (`src/config/config.ts`): Typed config loaded from `.env.development` or `.env.production` based on NODE_ENV
+- **Constants** (`src/utils/constants.ts`): Role and stage constants with `as const` typing
+- **WebSockets** (`src/webSockets.ts`): Socket.io handler that polls unread Contact messages count every 5 seconds
 
 ## Key Patterns
 
-- **Auth**: JWT tokens in Authorization header. `[md_auth.ensureAuth]` middleware on protected routes. User model defines three roles: `admin`, `editor`, `reviewer`. Self-registered users get `role: "editor"` and `active: false` (need admin activation). `signUpAdmin` creates pre-activated users with any role.
+- **Auth**: JWT tokens in Authorization header. `ensureAuth` middleware on protected routes. Returns 401 for invalid/expired tokens, 403 for missing auth header. User model defines three roles: `admin`, `editor`, `reviewer`. Self-registered users get `role: "editor"` and `active: false` (need admin activation). `signUpAdmin` creates pre-activated users with any role.
 - **Response format**: Mixed formats across controllers. Older controllers use `{ message: "..." }`. Newer ones use `{ status: <httpCode>, message: "...", [data] }`.
 - **Error messages**: Written in Spanish.
-- **File uploads**: `connect-multiparty` middleware. Avatar uploads go to `./uploads/avatar/`. Education images go to `./uploads/education/` with auto-generated thumbnails (`thumb_` prefix, 318x191px) via Sharp.
-- **Async style**: Predominantly callback-based Mongoose methods. Some controllers use `.then()` (e.g., `getUsers`, `webSockets`).
+- **File uploads**: `multer` middleware. Avatar uploads go to `./uploads/avatar/`. Education images go to `./uploads/education/` with auto-generated thumbnails (`thumb_` prefix, 318x191px) via Sharp.
+- **Async style**: async/await throughout all controllers and models.
 - **Route naming**: kebab-case (e.g., `/api/v1/sign-up`, `/api/v1/get-courses`).
 - **Pagination**: `mongoose-paginate-v2` used on education/courses endpoint (default 10 per page).
 - **Rate limiting**: Contact form prevents sending a new message until the previous one is marked as read.
 - **Intentional delays**: `signUp` has a 5-second delay before responding. `signIn` has a 5-second delay on wrong password.
-
-## Known Issues
-
-- **Missing `require('sharp')`**: `src/controllers/education.js` uses `sharp()` at line 220 but never imports it. The module is in `package.json` dependencies but the `require` statement is missing from the controller file.
-- **`.env.development.example` incomplete**: Missing `IP_MONGO_DB` variable which is required by `src/config/config.js`. The config references `process.env.IP_MONGO_DB` for the MongoDB connection URL.
-- **`fs.exists` deprecated**: Used in `getAvatar` and `getImage` controllers. Should use `fs.existsSync` or `fs.access`.
-- **Mongoose 5 legacy patterns**: Uses `useFindAndModify`, `useCreateIndex`, `useNewUrlParser`, `useUnifiedTopology` options that are unnecessary in Mongoose 6+.
 
 ## Domains
 
