@@ -2,7 +2,10 @@ import dotenv from 'dotenv';
 import { productionStage, developmentStage } from '../utils/constants';
 import { IConfig } from '../interfaces';
 
-dotenv.config({ path: process.env.NODE_ENV === productionStage ? '.env.production' : '.env.development' });
+dotenv.config({
+  path: process.env.NODE_ENV === productionStage ? '.env.production' : '.env.development',
+  quiet: true,
+});
 const ENV = process.env.NODE_ENV || developmentStage;
 
 const CONFIG: Record<string, IConfig> = {
