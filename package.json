@@ -5,6 +5,9 @@
   "main": "src/index.js",
   "author": "David Thomas Pizarro Frick",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "body-parser": "^1.19.0",
