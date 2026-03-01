@@ -62,12 +62,23 @@ jobs:
             --exclude='*' \
             ./ ${{ env.APP_SERVER }}:$DEPLOY_DIR/
 
-          # Install production deps
+          # Determine NODE_ENV and PM2 process name
+          if [ "$TARGET" = "staging" ]; then
+            NODE_ENV_VAL="staging"
+            PM2_NAME="${{ env.SERVICE_NAME }}-staging"
+          else
+            NODE_ENV_VAL="production"
+            PM2_NAME="${{ env.SERVICE_NAME }}"
+          fi
+
+          # Install production deps + reload PM2
           $SSH_CMD "
             export NVM_DIR=\$HOME/.nvm
             [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
             cd $DEPLOY_DIR
             pnpm install --prod
+            NODE_ENV=$NODE_ENV_VAL pm2 reload $PM2_NAME --update-env 2>/dev/null || \
+              NODE_ENV=$NODE_ENV_VAL pm2 start $DEPLOY_DIR/src/index.js --name $PM2_NAME
           "
 
           echo "✓ Backend deployed to $TARGET"

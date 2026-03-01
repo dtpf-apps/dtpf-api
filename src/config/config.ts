@@ -1,11 +1,15 @@
 import dotenv from 'dotenv';
-import { productionStage, developmentStage } from '../utils/constants';
+import { productionStage, stagingStage, developmentStage } from '../utils/constants';
 import { IConfig } from '../interfaces';
 
-dotenv.config({
-  path: process.env.NODE_ENV === productionStage ? '.env.production' : '.env.development',
-});
-const ENV = process.env.NODE_ENV || developmentStage;
+function getEnvPath(env: string | undefined): string {
+  if (env === productionStage) return '.env.production';
+  if (env === stagingStage) return '.env.staging';
+  return '.env.development';
+}
+
+dotenv.config({ path: getEnvPath(process.env.NODE_ENV) });
+const ENV = process.env.NODE_ENV === stagingStage ? productionStage : process.env.NODE_ENV || developmentStage;
 
 const CONFIG: Record<string, IConfig> = {
   development: {
