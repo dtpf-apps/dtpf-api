@@ -40,7 +40,7 @@ app.use(`/api/${config.app.API_VERSION}`, aboutMeRoutes);
 
 app.use(errorMiddleware);
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV !== 'development') {
   app.get('/client/service-worker.js', (_req: Request, res: Response) => {
     res.sendFile(path.resolve(__dirname, 'client', 'service-worker.js'));
   });
