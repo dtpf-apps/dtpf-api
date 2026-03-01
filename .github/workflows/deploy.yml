@@ -62,23 +62,26 @@ jobs:
             --exclude='*' \
             ./ ${{ env.APP_SERVER }}:$DEPLOY_DIR/
 
-          # Determine NODE_ENV and PM2 process name
+          # Install production deps + restart process
           if [ "$TARGET" = "staging" ]; then
-            NODE_ENV_VAL="staging"
-            PM2_NAME="${{ env.SERVICE_NAME }}-staging"
+            # Staging uses Forever
+            $SSH_CMD "
+              export NVM_DIR=\$HOME/.nvm
+              [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
+              cd $DEPLOY_DIR
+              pnpm install --prod
+              FOREVER_ROOT=\$HOME \$HOME/.nvm/versions/node/v22.22.0/bin/forever restart ${{ env.SERVICE_NAME }}-staging 2>/dev/null || true
+            "
           else
-            NODE_ENV_VAL="production"
-            PM2_NAME="${{ env.SERVICE_NAME }}"
+            # Production uses PM2
+            $SSH_CMD "
+              export NVM_DIR=\$HOME/.nvm
+              [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
+              cd $DEPLOY_DIR
+              pnpm install --prod
+              NODE_ENV=production pm2 reload ${{ env.SERVICE_NAME }} --update-env 2>/dev/null || \
+                NODE_ENV=production pm2 start $DEPLOY_DIR/src/index.js --name ${{ env.SERVICE_NAME }}
+            "
           fi
-
-          # Install production deps + reload PM2
-          $SSH_CMD "
-            export NVM_DIR=\$HOME/.nvm
-            [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
-            cd $DEPLOY_DIR
-            pnpm install --prod
-            NODE_ENV=$NODE_ENV_VAL pm2 reload $PM2_NAME --update-env 2>/dev/null || \
-              NODE_ENV=$NODE_ENV_VAL pm2 start $DEPLOY_DIR/src/index.js --name $PM2_NAME
-          "
 
           echo "✓ Backend deployed to $TARGET"
