@@ -2,8 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import config from './config/config';
 
-import authRoutes from './routers/auth';
-import userRoutes from './routers/user';
 import menuRoutes from './routers/menu';
 import contactRoutes from './routers/contact';
 import educationRoutes from './routers/education';
@@ -18,8 +16,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // CORS
+const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev-dtpf.es'];
+
 app.use((_req: Request, res: Response, next: NextFunction) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = _req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header(
     'Access-Control-Allow-Headers',
     'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method'
@@ -30,8 +33,6 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 });
 
 // Router Basic
-app.use(`/api/${config.app.API_VERSION}`, authRoutes);
-app.use(`/api/${config.app.API_VERSION}`, userRoutes);
 app.use(`/api/${config.app.API_VERSION}`, menuRoutes);
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
 app.use(`/api/${config.app.API_VERSION}`, educationRoutes);
