@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // CORS
-const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev-dtpf.es'];
+const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
 
 app.use((_req: Request, res: Response, next: NextFunction) => {
   const origin = _req.headers.origin;
