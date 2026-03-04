@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import cookieParser from 'cookie-parser';
+import { dauthRouter } from 'dauth-md-node/router';
 import config from './config/config';
 
 import menuRoutes from './routers/menu';
@@ -14,6 +16,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cookieParser());
 
 // CORS
 const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
@@ -22,15 +25,25 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   const origin = _req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
   }
   res.header(
     'Access-Control-Allow-Headers',
-    'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method'
+    'Authorization, X-API-KEY, X-CSRF-Token, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method'
   );
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
   next();
 });
+
+// Auth proxy (BFF — dauthRouter handles exchange-code, session, logout, user)
+app.use(
+  '/api/auth',
+  dauthRouter({
+    domainName: config.dauth.DOMAIN_NAME,
+    tsk: config.dauth.TSK,
+  })
+);
 
 // Router Basic
 app.use(`/api/${config.app.API_VERSION}`, menuRoutes);
