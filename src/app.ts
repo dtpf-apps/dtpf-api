@@ -42,6 +42,7 @@ app.use(
   dauthRouter({
     domainName: config.dauth.DOMAIN_NAME,
     tsk: config.dauth.TSK,
+    dauthUrl: config.dauth.DOMAIN_URL || undefined,
   })
 );
 
