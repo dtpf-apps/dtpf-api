@@ -71,6 +71,7 @@ Standard MVC pattern with Express + TypeScript:
 | `DAUTH_TSK` | `<secret>` | Dauth tenant secret key (must match `DTPF_TENANT_SECRET_KEY` in dauth backend) |
 | `DAUTH_DOMAIN_NAME` | `dtpf` | Dauth domain name |
 | `DAUTH_DOMAIN_URL` | `http://localhost:5185` | Dauth frontend URL (included in CORS whitelist) |
+| `DAUTH_PREVIOUS_TSK` | _(empty)_ | Previous TSK for zero-downtime key rotation (leave empty normally) |
 
 ### Production (`.env.production`)
 

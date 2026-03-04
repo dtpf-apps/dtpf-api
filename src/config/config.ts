@@ -26,6 +26,7 @@ const CONFIG: Record<string, IConfig> = {
       TSK: process.env.DAUTH_TSK || '',
       DOMAIN_NAME: process.env.DAUTH_DOMAIN_NAME || '',
       DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
+      PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
   },
   production: {
@@ -42,6 +43,7 @@ const CONFIG: Record<string, IConfig> = {
       TSK: process.env.DAUTH_TSK || '',
       DOMAIN_NAME: process.env.DAUTH_DOMAIN_NAME || '',
       DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
+      PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
   },
 };

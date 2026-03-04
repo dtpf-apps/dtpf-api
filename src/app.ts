@@ -43,6 +43,7 @@ app.use(
     domainName: config.dauth.DOMAIN_NAME,
     tsk: config.dauth.TSK,
     dauthUrl: config.dauth.DOMAIN_URL || undefined,
+    previousTsk: config.dauth.PREVIOUS_TSK || undefined,
   })
 );
 

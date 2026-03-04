@@ -12,5 +12,6 @@ export interface IConfig {
     TSK: string;
     DOMAIN_NAME: string;
     DOMAIN_URL: string;
+    PREVIOUS_TSK?: string;
   };
 }
