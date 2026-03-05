@@ -57,9 +57,6 @@ app.use(`/api/${config.app.API_VERSION}`, aboutMeRoutes);
 app.use(errorMiddleware);
 
 if (process.env.NODE_ENV !== 'development') {
-  app.get('/client/service-worker.js', (_req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'service-worker.js'));
-  });
   app.use('/', express.static('client', { redirect: false }));
   app.get('/{*splat}', (_req: Request, res: Response) => {
     res.sendFile(path.resolve('client/index.html'));
