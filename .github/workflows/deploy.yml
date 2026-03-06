@@ -76,16 +76,15 @@ jobs:
 
           # Restart process
           if [ "$TARGET" = "staging" ]; then
-            $SSH_CMD "
-              export NVM_DIR=\$HOME/.nvm && [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
-              FOREVER_ROOT=\$HOME \$HOME/.nvm/versions/node/v22.22.0/bin/forever restart dtpf-staging 2>/dev/null || true
-            "
+            PM2_NAME="dtpf-staging"
+            NODE_ENV_VAL="staging"
           else
-            $SSH_CMD "
-              export NVM_DIR=\$HOME/.nvm && [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
-              NODE_ENV=production pm2 reload dtpf --update-env 2>/dev/null || \
-                NODE_ENV=production pm2 start $DEPLOY_DIR/src/index.js --name dtpf
-            "
+            PM2_NAME="dtpf"
+            NODE_ENV_VAL="production"
           fi
+          $SSH_CMD "
+            export NVM_DIR=\$HOME/.nvm && [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh
+            NODE_ENV=$NODE_ENV_VAL pm2 reload $PM2_NAME --update-env
+          "
 
           echo "✓ Backend deployed to $TARGET"
