@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import app from './app';
 import config from './config/config';
+import logger from './services/logger';
 import { getMessagesLength } from './webSockets';
 
 const server = http.createServer(app);
@@ -13,7 +14,7 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log(`${io.engine.clientsCount} usuario/s conectados`);
+  logger.info(`${io.engine.clientsCount} usuario/s conectados`);
   getMessagesLength(socket);
   const interval = setInterval(() => getMessagesLength(socket), 5000);
   socket.on('disconnect', () => {
@@ -24,12 +25,12 @@ io.on('connection', (socket) => {
 async function start() {
   try {
     await mongoose.connect(config.db.MONGO_URL);
-    console.log('La conexión a la base de datos es correcta');
+    logger.info('La conexión a la base de datos es correcta');
     server.listen(config.app.PORT, () => {
-      console.log(config.app.URL);
+      logger.info(config.app.URL);
     });
   } catch (err) {
-    console.error('Error al conectar con la base de datos:', err);
+    logger.error(err, 'Error al conectar con la base de datos');
     process.exit(1);
   }
 }

@@ -1,8 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import pinoHttp from 'pino-http';
 import { dauthRouter } from 'dauth-md-node/router';
 import config from './config/config';
+import logger from './services/logger';
 
 import menuRoutes from './routers/menu';
 import contactRoutes from './routers/contact';
@@ -16,6 +18,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(pinoHttp({ logger }));
 app.use(cookieParser());
 
 // CORS
