@@ -45,6 +45,7 @@ Standard MVC pattern with Express + TypeScript:
 - **Route naming**: kebab-case (e.g., `/api/v1/get-courses`, `/api/v1/add-menu`).
 - **Pagination**: `mongoose-paginate-v2` used on education/courses endpoint (default 10 per page).
 - **Rate limiting**: Contact form prevents sending a new message until the previous one is marked as read.
+- **Structured logging**: pino + pino-http (JSON output). Logger in `src/services/logger.ts`.
 
 ## Content Domains
 
