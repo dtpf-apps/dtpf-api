@@ -52,7 +52,24 @@ app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
 app.use(errorMiddleware);
 
 if (process.env.NODE_ENV !== 'development') {
-  app.use('/', express.static('client', { redirect: false }));
+  app.use(
+    '/assets',
+    express.static('client/assets', { maxAge: '1y', immutable: true, redirect: false })
+  );
+  app.use('/service-worker.js', (_req: Request, res: Response) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('CDN-Cache-Control', 'no-store');
+    res.sendFile(path.resolve('client/service-worker.js'));
+  });
+  app.use(
+    '/',
+    express.static('client', {
+      redirect: false,
+      setHeaders: (res) => {
+        res.setHeader('CDN-Cache-Control', 'no-store');
+      },
+    })
+  );
   app.get('/{*splat}', (_req: Request, res: Response) => {
     res.sendFile(path.resolve('client/index.html'));
   });
