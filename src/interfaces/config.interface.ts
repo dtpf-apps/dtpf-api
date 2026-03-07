@@ -14,4 +14,9 @@ export interface IConfig {
     DOMAIN_URL: string;
     PREVIOUS_TSK?: string;
   };
+  email: {
+    EMAIL: string;
+    EMAIL_PASSWORD: string;
+    NOTIFICATION_TO: string;
+  };
 }

@@ -2,12 +2,9 @@ import mongoose, { Schema } from 'mongoose';
 import { IContactDocument } from '../interfaces';
 
 const ContactSchema = new Schema<IContactDocument>({
-  email: { type: String },
-  name: { type: String },
-  phone_number: { type: String },
-  subject: { type: String },
-  message: { type: String },
-  readed: { type: Boolean },
+  email: { type: String, required: true },
+  name: { type: String, default: '' },
+  message: { type: String, required: true },
   date: { type: Date, default: Date.now },
 });
 
