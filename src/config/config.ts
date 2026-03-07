@@ -28,6 +28,11 @@ const CONFIG: Record<string, IConfig> = {
       DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
       PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
+    email: {
+      EMAIL: process.env.EMAIL || '',
+      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
+      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'davidpizarrofrick@gmail.com',
+    },
   },
   production: {
     app: {
@@ -44,6 +49,11 @@ const CONFIG: Record<string, IConfig> = {
       DOMAIN_NAME: process.env.DAUTH_DOMAIN_NAME || '',
       DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
       PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
+    },
+    email: {
+      EMAIL: process.env.EMAIL || '',
+      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
+      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'davidpizarrofrick@gmail.com',
     },
   },
 };

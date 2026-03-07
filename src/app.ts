@@ -1,16 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import cookieParser from 'cookie-parser';
 import pinoHttp from 'pino-http';
 import { dauthRouter } from 'dauth-md-node/router';
 import config from './config/config';
 import logger from './services/logger';
 
-import menuRoutes from './routers/menu';
 import contactRoutes from './routers/contact';
-import educationRoutes from './routers/education';
 import utilsRoutes from './routers/utils';
-import aboutMeRoutes from './routers/aboutMe';
 import { errorMiddleware } from './middlewares/error.middleware';
 
 const app = express();
@@ -19,7 +15,6 @@ app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(pinoHttp({ logger }));
-app.use(cookieParser());
 
 // CORS
 const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
@@ -50,12 +45,9 @@ app.use(
   })
 );
 
-// Router Basic
-app.use(`/api/${config.app.API_VERSION}`, menuRoutes);
+// Routes
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
-app.use(`/api/${config.app.API_VERSION}`, educationRoutes);
 app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
-app.use(`/api/${config.app.API_VERSION}`, aboutMeRoutes);
 
 app.use(errorMiddleware);
 
