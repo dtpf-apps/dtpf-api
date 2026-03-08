@@ -1,38 +1,30 @@
 # dtpf-backend-node
 
-Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Provides RESTful endpoints for user authentication, portfolio content management (education/courses, menu, about me), contact form handling, and real-time unread message notifications via WebSockets.
+Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handles contact form submissions with multi-layer anti-spam protection, email notifications via Nodemailer, and authentication proxy (BFF) for dauth integration.
 
 ## Tech Stack
 
-- **Runtime:** Node.js 16
-- **Framework:** Express 4
-- **Database:** MongoDB 5 with Mongoose 5 ODM
-- **Authentication:** JWT (jwt-simple) with access and refresh tokens (24h expiry)
-- **WebSockets:** Socket.io 2
-- **Image Processing:** Sharp (thumbnail generation)
-- **File Uploads:** connect-multiparty
-- **Password Hashing:** bcrypt
-- **Language:** JavaScript (ES6+, CommonJS modules)
+- **Runtime:** Node.js 22
+- **Framework:** Express 5
+- **Language:** TypeScript 5.9
+- **Database:** MongoDB with Mongoose 9
+- **Authentication:** dauth via dauth-md-node (BFF proxy)
+- **Email:** Nodemailer (Gmail SMTP)
+- **Logging:** Pino + pino-http (structured JSON)
+- **Package Manager:** pnpm
 
 ## Prerequisites
 
-- Node.js >= 16
-- npm
-- Docker (for local MongoDB) or a running MongoDB 5 instance
-- A local MongoDB Docker container named `dtpf-mongodb` mapped to port 27019
-
-To create the Docker container for the first time:
-
-```bash
-docker run -d --name dtpf-mongodb -p 27019:27017 mongo:5
-```
+- Node.js >= 22
+- pnpm
+- Docker (for local MongoDB)
 
 ## Installation
 
 ```bash
-git clone https://github.com/DTPF/portfolio.backend.git dtpf-backend-node
+git clone https://github.com/dtpf-apps/dtpf-backend-node.git
 cd dtpf-backend-node
-npm install
+pnpm install
 ```
 
 Copy the environment example file and configure it:
@@ -41,34 +33,24 @@ Copy the environment example file and configure it:
 cp .env.development.example .env.development
 ```
 
-Edit `.env.development` with your settings. Note that `IP_MONGO_DB` is required by the application but missing from the example file -- add it manually:
-
-```
-API_VERSION=v1
-IP_SERVER=127.0.0.1
-IP_MONGO_DB=127.0.0.1
-PORT_MONGO_DB=27019
-DB_NAME=dtpf
-PORT_SERVER=3998
-SECRET_KEY=your-secret-key
-```
-
 ## Available Scripts
 
 | Script | Command | Description |
 |--------|---------|-------------|
-| `db` | `npm run db` | Start the local MongoDB Docker container |
-| `dev` | `npm run dev` | Start development server with nodemon (auto-restart on changes) |
-| `start` | `npm run start` | Start production server |
+| `db` | `pnpm db` | Start local MongoDB Docker container (`dtpf-mongodb`, port 27019) |
+| `dev` | `pnpm dev` | Start dev server with `tsc --watch` + nodemon (port 3998) |
+| `build` | `pnpm build` | Compile TypeScript to `dist/` |
+| `start` | `pnpm start` | Start production server (`NODE_ENV=production`) |
+| `format` | `pnpm format` | Format source files with Prettier |
 
 ## Development
 
 ```bash
 # 1. Start MongoDB
-npm run db
+pnpm db
 
 # 2. Start the dev server (port 3998)
-npm run dev
+pnpm dev
 ```
 
 The server starts at `http://127.0.0.1:3998/api/v1/`.
@@ -77,150 +59,99 @@ The server starts at `http://127.0.0.1:3998/api/v1/`.
 
 ```
 src/
-  index.js              # Entry point: HTTP server, Socket.io, MongoDB connection
-  app.js                # Express configuration, CORS, route registration, SPA serving (production)
-  config/
-    config.js           # Environment-based configuration loader (.env files)
-  controllers/          # Business logic (request handlers)
-    aboutMe.js          # About Me CRUD
-    auth.js             # Token refresh
-    contact.js          # Contact form and message management
-    education.js        # Courses CRUD with pagination, images, tags
-    menu.js             # Navigation menu CRUD
-    user.js             # User registration, authentication, management
-    utils.js            # Health check, IndexedDB versioning, message reload flags
-  middlewares/
-    authenticated.js    # JWT validation middleware (ensureAuth)
-  models/               # Mongoose schemas
-    aboutMe.js          # AboutMe: title + 6 content sections
-    contact.js          # Contact: email, name, phone, subject, message, read status
-    education.js        # Education: title, description, duration, image, tags, URL (paginated)
-    menu.js             # Menu: title, url, order, active state
-    user.js             # User: name, lastname, email, password, role, active, avatar
-    utils.js            # Utils: reload flags, IndexedDB version
-  routers/              # Express route definitions (all under /api/v1/)
-    aboutMe.js
-    auth.js
-    contact.js
-    education.js
-    menu.js
-    user.js
-    utils.js
-  services/
-    jwt.js              # JWT token creation and decoding (jwt-simple)
-  utils/
-    constants.js        # Role and stage constants
-  webSockets.js         # Socket.io handler for unread message count polling
-uploads/                # File upload storage (gitignored content)
-  avatar/               # User avatar images
-  education/            # Course images and thumbnails (thumb_ prefix)
+├── config/config.ts             # Typed config (app, db, dauth, email)
+├── controllers/
+│   ├── contact.ts               # Contact form + anti-spam + email notification
+│   └── utils.ts                 # Health check
+├── interfaces/
+│   ├── config.interface.ts
+│   ├── contact.interface.ts
+│   └── index.ts
+├── middlewares/
+│   └── error.middleware.ts
+├── models/
+│   └── contact.ts               # Contact schema (email, name, message, date)
+├── routers/
+│   ├── contact.ts               # POST /contact-me
+│   └── utils.ts                 # GET /connection
+├── services/
+│   ├── email.ts                 # Nodemailer Gmail SMTP with retry
+│   ├── emailTemplates.ts        # Styled HTML email template (Ocean Teal design)
+│   └── logger.ts                # Pino structured logging
+├── utils/constants.ts
+├── app.ts                       # Express config, CORS, pino-http, route mounting
+└── index.ts                     # Entry point: MongoDB connection, server start
 ```
+
+In production, the backend serves the pre-built frontend from a `client/` directory as static files with SPA catch-all routing.
 
 ## API Endpoints
 
 All endpoints are prefixed with `/api/v1/`.
 
-### Authentication
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v1/contact-me` | No | Submit contact form |
+| `GET` | `/api/v1/connection` | No | Health check |
+| `*` | `/api/auth/*` | -- | dauth BFF proxy (exchange-code, session, etc.) |
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/refresh-access-token` | No | Refresh an expired access token |
+The `/api/auth/*` routes are provided by the `dauthRouter` from the `dauth-md-node` package, handling authorization code exchange for dauth-based authentication.
 
-### Users
+## Contact Form Anti-Spam
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/sign-up` | No | Register a new user (starts as inactive editor) |
-| POST | `/sign-in` | No | Authenticate and receive JWT tokens |
-| GET | `/users` | Yes | List all users |
-| PUT | `/upload-avatar/:id` | Yes | Upload user avatar image (png/jpg) |
-| GET | `/get-avatar/:avatarName` | No | Retrieve avatar image file |
-| PUT | `/update-user/:id` | Yes | Update user profile |
-| PUT | `/activate-user/:id` | Yes | Activate or deactivate a user |
-| DELETE | `/delete-user/:id` | Yes | Delete a user and their avatar |
-| POST | `/sign-up-admin` | Yes | Create an admin-activated user with custom role |
+The contact endpoint uses 5 layers of protection:
 
-### Menu
+1. **Honeypot** -- `website` field: if filled, returns a fake 200 (bot trap)
+2. **Time trap** -- `_t` timestamp: if submitted in under 3 seconds, returns a fake 200
+3. **IP rate limit** -- max 3 requests per hour per IP (in-memory)
+4. **Email cooldown** -- max 1 message per email address every 24 hours (MongoDB)
+5. **URL detection** -- max 5 URLs allowed in message body
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/add-menu` | Yes | Create a menu item |
-| GET | `/get-menus` | No | Get all menu items (sorted by order) |
-| PUT | `/update-menu/:id` | Yes | Update a menu item |
-| PUT | `/activate-menu/:id` | Yes | Toggle menu item active state |
-| DELETE | `/delete-menu/:id` | Yes | Delete a menu item |
+## Email Notifications
 
-### Contact
+When a contact form is submitted, the backend:
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/contact-me` | No | Submit a contact form (rate-limited per email) |
-| GET | `/get-contact-messages-unread` | Yes | Get messages filtered by read status |
-| PUT | `/check-contact-message/:id` | Yes | Mark a message as read/unread |
-| DELETE | `/delete-contact-message/:id` | Yes | Delete a contact message |
-| GET | `/get-last-message-email` | Yes | Get email of the most recent unread message |
+1. Saves the message to MongoDB
+2. Sends a styled HTML email to the `NOTIFICATION_TO` address (non-blocking)
+3. Sets `replyTo` to the sender's email for easy replies
 
-### Education
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/add-course` | Yes | Create a new course |
-| GET | `/get-courses` | No | Get paginated courses (query: `page`, `limit`) |
-| GET | `/get-course/:url` | No | Get a single course by URL slug |
-| GET | `/get-next-course/:url` | No | Get the next course URL in sequence |
-| GET | `/get-prev-course/:url` | No | Get the previous course URL in sequence |
-| PUT | `/update-course/:id` | Yes | Update course details |
-| PUT | `/upload-image/:id` | Yes | Upload course image (auto-generates thumbnail) |
-| PUT | `/add-tag/:id` | Yes | Add a tag to a course |
-| DELETE | `/delete-tag/:id` | Yes | Remove a tag from a course |
-| GET | `/get-image/:imageName` | No | Retrieve course image file |
-| DELETE | `/delete-course/:id` | Yes | Delete a course and its images |
-
-### About Me
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/add-about-me-info` | Yes | Create an about me entry |
-| GET | `/get-about-me-info/:title` | No | Get about me content by title |
-| PUT | `/update-about-me-info/:title` | Yes | Update about me content |
-
-### Utils
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/connection` | No | Health check (returns 200) |
-| GET | `/messages-status` | No | Get current message reload flag |
-| POST | `/reload-messages/:haveToReload` | No | Set message reload flag |
-| POST | `/create-reload-messages` | No | Initialize reload messages util record |
-| POST | `/create-indexeddb-version` | No | Initialize IndexedDB version record |
-| GET | `/get-indexeddb-version` | No | Get current IndexedDB version number |
-| PUT | `/update-indexeddb-version` | No | Increment IndexedDB version by 1 |
-
-## WebSocket Events
-
-The server emits a `getMessagesLength` event every 5 seconds per connected client, containing the count of unread contact messages.
+The email template matches the dtpf.es visual identity (dark background, Ocean Teal accents, card layout).
 
 ## Environment Variables
 
-### Development (`.env.development`)
+Copy `.env.development.example` to `.env.development` and fill in the values.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `API_VERSION` | API version prefix (used in route paths) | `v1` |
-| `IP_SERVER` | Server bind address | `127.0.0.1` |
-| `IP_MONGO_DB` | MongoDB host address | `127.0.0.1` |
-| `PORT_MONGO_DB` | MongoDB port | `27019` |
-| `DB_NAME` | MongoDB database name | `dtpf` |
-| `PORT_SERVER` | Express server port | `3998` |
-| `SECRET_KEY` | JWT signing secret | - |
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `API_VERSION` | `v1` | API version prefix |
+| `IP_SERVER` | `127.0.0.1` | Server bind address |
+| `IP_MONGO_DB` | `127.0.0.1` | MongoDB host |
+| `PORT_MONGO_DB` | `27019` | MongoDB port |
+| `DB_NAME` | `dtpf` | Database name |
+| `PORT_SERVER` | `3998` | Express port |
+| `DAUTH_TSK` | -- | dauth tenant secret key |
+| `DAUTH_DOMAIN_NAME` | `dtpf` | dauth domain name |
+| `DAUTH_DOMAIN_URL` | `http://localhost:5185` | dauth frontend URL |
+| `DAUTH_PREVIOUS_TSK` | _(empty)_ | For zero-downtime TSK rotation |
+| `EMAIL` | `your-email@gmail.com` | Gmail SMTP sender |
+| `EMAIL_PASSWORD` | -- | Gmail app password |
+| `NOTIFICATION_TO` | `your@email.com` | Recipient for contact notifications |
 
-### Production (`.env.production`)
+## Deployment
 
-Same as development, plus:
+Deployment is automatic via GitHub Actions. Push to a branch triggers build + deploy via rsync to the app server.
 
-| Variable | Description |
-|----------|-------------|
-| `DB_USER_PASSWORD` | MongoDB auth credentials (format: `user:password`) |
+```bash
+git push origin main    # deploys to production (dtpf.es, port 3998)
+git push origin dev     # deploys to staging (dev.dtpf.es, port 5998)
+```
+
+Server paths: `/html/dtpf/production/`, `/html/dtpf/staging/`. Process manager: PM2.
+
+## Code Style
+
+- Prettier: 110 char width, single quotes, semicolons, trailing commas (es5), 2-space indent
+- No linter or test framework configured
 
 ## License
 
