@@ -1,17 +1,20 @@
 # dtpf-backend-node
 
-Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handles contact form submissions with multi-layer anti-spam protection, email notifications via Nodemailer, and authentication proxy (BFF) for dauth integration.
+Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handles contact form submissions with 5-layer anti-spam protection, sends styled email notifications via Nodemailer, and provides a BFF auth proxy for dauth integration. Live at [dtpf.es](https://dtpf.es).
 
 ## Tech Stack
 
-- **Runtime:** Node.js 22
-- **Framework:** Express 5
-- **Language:** TypeScript 5.9
-- **Database:** MongoDB with Mongoose 9
-- **Authentication:** dauth via dauth-md-node (BFF proxy)
-- **Email:** Nodemailer (Gmail SMTP)
-- **Logging:** Pino + pino-http (structured JSON)
-- **Package Manager:** pnpm
+| Technology | Version | Purpose |
+|---|---|---|
+| Node.js | 22 | Runtime |
+| Express | 5 | HTTP framework |
+| TypeScript | 5.9 | Type safety |
+| MongoDB | 8 | Database |
+| Mongoose | 9 | ODM |
+| Nodemailer | 8 | Email (Gmail SMTP) |
+| Pino | 10 | Structured JSON logging |
+| dauth-md-node | 4 | Auth BFF proxy |
+| Vitest | 4 | Testing |
 
 ## Prerequisites
 
@@ -19,41 +22,45 @@ Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handl
 - pnpm
 - Docker (for local MongoDB)
 
-## Installation
+## Setup
 
 ```bash
 git clone https://github.com/dtpf-apps/dtpf-backend-node.git
 cd dtpf-backend-node
 pnpm install
-```
-
-Copy the environment example file and configure it:
-
-```bash
 cp .env.development.example .env.development
 ```
 
-## Available Scripts
+## Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `db` | `pnpm db` | Start local MongoDB Docker container (`dtpf-mongodb`, port 27019) |
-| `dev` | `pnpm dev` | Start dev server with `tsc --watch` + nodemon (port 3998) |
-| `build` | `pnpm build` | Compile TypeScript to `dist/` |
-| `start` | `pnpm start` | Start production server (`NODE_ENV=production`) |
-| `format` | `pnpm format` | Format source files with Prettier |
+| Script | Description |
+|---|---|
+| `pnpm db` | Start local MongoDB Docker container (port 27019) |
+| `pnpm dev` | Start dev server with `tsc --watch` + nodemon (port 3998) |
+| `pnpm build` | Compile TypeScript to `dist/` |
+| `pnpm start` | Start production server (`NODE_ENV=production`) |
+| `pnpm format` | Format source files with Prettier |
+| `pnpm test` | Run tests with Vitest |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with v8 coverage report |
 
-## Development
+## Environment Variables
 
-```bash
-# 1. Start MongoDB
-pnpm db
-
-# 2. Start the dev server (port 3998)
-pnpm dev
-```
-
-The server starts at `http://127.0.0.1:3998/api/v1/`.
+| Variable | Description | Default |
+|---|---|---|
+| `API_VERSION` | API version prefix | `v1` |
+| `IP_SERVER` | Server bind address | `127.0.0.1` |
+| `IP_MONGO_DB` | MongoDB host | `127.0.0.1` |
+| `PORT_MONGO_DB` | MongoDB port | `27019` |
+| `DB_NAME` | Database name | `dtpf` |
+| `PORT_SERVER` | Express port | `3998` |
+| `DAUTH_TSK` | dauth tenant secret key | -- |
+| `DAUTH_DOMAIN_NAME` | dauth domain name | `dtpf` |
+| `DAUTH_DOMAIN_URL` | dauth frontend URL | `http://localhost:5185` |
+| `DAUTH_PREVIOUS_TSK` | For zero-downtime TSK rotation | _(empty)_ |
+| `EMAIL` | Gmail SMTP sender address | -- |
+| `EMAIL_PASSWORD` | Gmail app password | -- |
+| `NOTIFICATION_TO` | Recipient for contact notifications | -- |
 
 ## Project Structure
 
@@ -83,19 +90,17 @@ src/
 └── index.ts                     # Entry point: MongoDB connection, server start
 ```
 
-In production, the backend serves the pre-built frontend from a `client/` directory as static files with SPA catch-all routing.
+In production, the backend serves the pre-built frontend from a `client/` directory as static files with SPA catch-all routing, immutable asset caching, and no-cache service worker headers.
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api/v1/`.
+All endpoints prefixed with `/api/v1`.
 
 | Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/v1/contact-me` | No | Submit contact form |
-| `GET` | `/api/v1/connection` | No | Health check |
-| `*` | `/api/auth/*` | -- | dauth BFF proxy (exchange-code, session, etc.) |
-
-The `/api/auth/*` routes are provided by the `dauthRouter` from the `dauth-md-node` package, handling authorization code exchange for dauth-based authentication.
+|---|---|---|---|
+| `POST` | `/api/v1/contact-me` | Public | Submit contact form |
+| `GET` | `/api/v1/connection` | Public | Health check |
+| `*` | `/api/auth/*` | -- | dauth BFF proxy (exchange-code, session) |
 
 ## Contact Form Anti-Spam
 
@@ -117,41 +122,27 @@ When a contact form is submitted, the backend:
 
 The email template matches the dtpf.es visual identity (dark background, Ocean Teal accents, card layout).
 
-## Environment Variables
+## Testing
 
-Copy `.env.development.example` to `.env.development` and fill in the values.
-
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `API_VERSION` | `v1` | API version prefix |
-| `IP_SERVER` | `127.0.0.1` | Server bind address |
-| `IP_MONGO_DB` | `127.0.0.1` | MongoDB host |
-| `PORT_MONGO_DB` | `27019` | MongoDB port |
-| `DB_NAME` | `dtpf` | Database name |
-| `PORT_SERVER` | `3998` | Express port |
-| `DAUTH_TSK` | -- | dauth tenant secret key |
-| `DAUTH_DOMAIN_NAME` | `dtpf` | dauth domain name |
-| `DAUTH_DOMAIN_URL` | `http://localhost:5185` | dauth frontend URL |
-| `DAUTH_PREVIOUS_TSK` | _(empty)_ | For zero-downtime TSK rotation |
-| `EMAIL` | `your-email@gmail.com` | Gmail SMTP sender |
-| `EMAIL_PASSWORD` | -- | Gmail app password |
-| `NOTIFICATION_TO` | `your@email.com` | Recipient for contact notifications |
-
-## Deployment
-
-Deployment is automatic via GitHub Actions. Push to a branch triggers build + deploy via rsync to the app server.
+38 tests across 5 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines).
 
 ```bash
-git push origin main    # deploys to production (dtpf.es, port 3998)
-git push origin dev     # deploys to staging (dev.dtpf.es, port 5998)
+pnpm test
+pnpm test:coverage
 ```
 
-Server paths: `/html/dtpf/production/`, `/html/dtpf/staging/`. Process manager: PM2.
+## Deploy
+
+GitHub Actions CI/CD. Push triggers build on self-hosted runner + rsync to app server.
+
+```bash
+git push origin main    # production (dtpf.es, port 3998)
+git push origin dev     # staging (dev.dtpf.es, port 5998)
+```
 
 ## Code Style
 
-- Prettier: 110 char width, single quotes, semicolons, trailing commas (es5), 2-space indent
-- No linter or test framework configured
+Prettier: 110 char width, single quotes, semicolons, trailing commas (es5), 2-space indent.
 
 ## License
 
