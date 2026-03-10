@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 5, TypeScript, and MongoDB (Mongoose 9). Package manager: **pnpm**.
+Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 5, TypeScript 5.9, and MongoDB (Mongoose 9). Package manager: **pnpm**.
 
 Serves two purposes:
 1. **Contact form API** — receives messages, stores in MongoDB, sends email notification
@@ -25,7 +25,7 @@ pnpm test:coverage   # Run tests with v8 coverage report
 
 ### Testing
 
-Vitest 4 with globals. 38 tests across 5 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
+Vitest 4 with globals. **38 tests** across 5 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
 
 ```
 test/
@@ -46,7 +46,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 ### Entry Flow
 
 `src/index.ts` connects to MongoDB, verifies email transporter, and starts Express server.
-`src/app.ts` configures middleware (JSON parser, CORS, pino-http) and mounts routes. In production, serves the frontend from `client/` as static files with SPA catch-all.
+`src/app.ts` configures middleware (JSON parser, CORS, pino-http) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and SPA catch-all routing.
 
 ### File Structure
 
