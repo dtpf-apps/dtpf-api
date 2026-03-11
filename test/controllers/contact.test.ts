@@ -388,4 +388,125 @@ describe('contactMe controller', () => {
       expect(res.status).toHaveBeenCalledWith(429);
     });
   });
+
+  // --- Email normalization edge cases ---
+  describe('email normalization', () => {
+    it('normalizes email with mixed case domain', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ email: 'user@GMAIL.COM' }),
+        ip: `norm-domain-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
+      expect(constructorCall.email).toBe('user@gmail.com');
+    });
+
+    it('normalizes email with leading/trailing spaces via lowercase', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ email: '  USER@Example.COM  ' }),
+        ip: `norm-spaces-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
+      expect(constructorCall.email).toBe('  user@example.com  ');
+    });
+  });
+
+  // --- Message trimming ---
+  describe('message trimming', () => {
+    it('trims whitespace from message before saving', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ message: '  Este es un mensaje con espacios.  ' }),
+        ip: `trim-msg-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
+      expect(constructorCall.message).toBe('Este es un mensaje con espacios.');
+    });
+  });
+
+  // --- URL detection edge cases ---
+  describe('URL detection edge cases', () => {
+    it('counts mixed https and www URLs in same message', async () => {
+      const msg =
+        'Visit https://a.com and www.b.com and https://c.com and www.d.com and https://e.com and www.f.com text';
+      const req = createMockRequest({
+        body: createValidContactBody({ message: msg }),
+        ip: `url-mixed-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res._body.message).toContain('enlaces');
+    });
+
+    it('accepts message with exactly 5 mixed URL types', async () => {
+      const msg =
+        'Check https://a.com www.b.com http://c.com www.d.com https://e.com and that is all for today';
+      const req = createMockRequest({
+        body: createValidContactBody({ message: msg }),
+        ip: `url-exact5-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  // --- Rate limit edge cases ---
+  describe('rate limit edge cases', () => {
+    it('uses "unknown" when both x-forwarded-for and req.ip are absent', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody(),
+        ip: undefined,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockSave).toHaveBeenCalled();
+    });
+  });
+
+  // --- Server error ---
+  describe('server error handling', () => {
+    it('returns 500 if an unexpected error is thrown', async () => {
+      mockSave.mockRejectedValue(new Error('Unexpected DB crash'));
+
+      const req = createMockRequest({
+        body: createValidContactBody(),
+        ip: `err-crash-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res._body.message).toBe('Error del servidor.');
+    });
+  });
 });

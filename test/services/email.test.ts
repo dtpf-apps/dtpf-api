@@ -26,6 +26,7 @@ vi.mock('../../src/config/config', () => ({
 }));
 
 import { sendEmail, verifyEmailConnection } from '../../src/services/email';
+import logger from '../../src/services/logger';
 
 describe('sendEmail', () => {
   beforeEach(() => {
@@ -60,6 +61,43 @@ describe('sendEmail', () => {
     const result = await promise;
     expect(result).toBe(false);
     expect(mockSendMail).toHaveBeenCalledTimes(2);
+  });
+
+  it('calls sendMail exactly MAX_RETRIES (2) times when all fail', async () => {
+    mockSendMail.mockRejectedValue(new Error('Persistent SMTP failure'));
+    const promise = sendEmail({ to: 'test@test.com', subject: 'Retry boundary' });
+    await vi.advanceTimersByTimeAsync(2000);
+    const result = await promise;
+    expect(result).toBe(false);
+    // MAX_RETRIES = 2: attempt 1 fails, waits 2s, attempt 2 fails, returns false
+    expect(mockSendMail).toHaveBeenCalledTimes(2);
+    expect(mockSendMail).not.toHaveBeenCalledTimes(3);
+  });
+
+  it('logs success info with messageId on successful send', async () => {
+    mockSendMail.mockResolvedValueOnce({ messageId: 'msg-xyz' });
+    await sendEmail({ to: 'info@test.com', subject: 'Log test' });
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'msg-xyz', to: 'info@test.com', attempt: 1 }),
+      'Email sent'
+    );
+  });
+
+  it('logs error on each failed attempt', async () => {
+    const error = new Error('SMTP down');
+    mockSendMail.mockRejectedValue(error);
+    const promise = sendEmail({ to: 'fail@test.com', subject: 'Error log test' });
+    await vi.advanceTimersByTimeAsync(2000);
+    await promise;
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: error, to: 'fail@test.com', attempt: 1 }),
+      'Email send failed'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: error, to: 'fail@test.com', attempt: 2 }),
+      'Email send failed'
+    );
   });
 });
 

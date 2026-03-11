@@ -55,4 +55,31 @@ describe('contactNotificationHtml', () => {
     expect(html).toContain('Sin nombre');
     expect(html).toContain('Responder a Sin nombre');
   });
+
+  it('handles very long strings (>1000 chars) without breaking', () => {
+    const longMessage = 'A'.repeat(1500);
+    const html = contactNotificationHtml({ ...baseData, message: longMessage });
+    expect(html).toContain('A'.repeat(1500));
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('</html>');
+  });
+
+  it('handles unicode and special characters combined', () => {
+    const html = contactNotificationHtml({
+      ...baseData,
+      name: 'José María <Ñoño>',
+      message: 'Hola 👋 ¿Qué tal? €100 & más — "comillas"',
+    });
+    expect(html).toContain('José María &lt;Ñoño&gt;');
+    expect(html).toContain('€100 &amp; más — &quot;comillas&quot;');
+    expect(html).toContain('👋');
+  });
+
+  it('converts consecutive newlines to multiple <br /> tags', () => {
+    const html = contactNotificationHtml({
+      ...baseData,
+      message: 'Párrafo 1\n\n\nPárrafo 2',
+    });
+    expect(html).toContain('Párrafo 1<br /><br /><br />Párrafo 2');
+  });
 });
