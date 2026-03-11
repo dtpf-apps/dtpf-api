@@ -1,0 +1,12 @@
+.gitignore
+# dependencies
+/node_modules
+/dist
+#IDE`s
+.vscode
+.env.development
+.env.production
+/src_old
+/client_old
+.claude/
+coverage/
