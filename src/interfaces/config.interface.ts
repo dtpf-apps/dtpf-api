@@ -15,8 +15,11 @@ export interface IConfig {
     PREVIOUS_TSK?: string;
   };
   email: {
-    EMAIL: string;
-    EMAIL_PASSWORD: string;
+    SMTP_HOST: string;
+    SMTP_PORT: number;
+    SMTP_USER: string;
+    SMTP_PASS: string;
+    EMAIL_FROM: string;
     NOTIFICATION_TO: string;
   };
 }

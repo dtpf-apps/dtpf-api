@@ -110,7 +110,7 @@ export async function contactMe(req: Request, res: Response) {
     ipRequests.set(clientIp, recentRequests);
 
     // Send notification email (non-blocking)
-    if (config.email.EMAIL) {
+    if (config.email.SMTP_USER) {
       const dateStr = new Date().toLocaleDateString('es-ES', {
         weekday: 'long',
         year: 'numeric',
@@ -121,7 +121,7 @@ export async function contactMe(req: Request, res: Response) {
       });
 
       sendEmail({
-        from: `"dtpf.es" <${config.email.EMAIL}>`,
+        from: `"dtpf.es" <${config.email.EMAIL_FROM}>`,
         to: config.email.NOTIFICATION_TO,
         replyTo: email.toLowerCase(),
         subject: `Nuevo mensaje de ${name || email} — dtpf.es`,

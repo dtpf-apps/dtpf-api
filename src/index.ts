@@ -9,7 +9,7 @@ async function start() {
     await mongoose.connect(config.db.MONGO_URL);
     logger.info('La conexion a la base de datos es correcta');
 
-    if (config.email.EMAIL) {
+    if (config.email.SMTP_USER) {
       await verifyEmailConnection();
     }
 
