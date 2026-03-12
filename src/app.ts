@@ -27,10 +27,10 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   }
   res.header(
     'Access-Control-Allow-Headers',
-    'Authorization, X-API-KEY, X-CSRF-Token, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method'
+    'Authorization, Origin, X-Requested-With, Content-Type, Accept'
   );
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Allow', 'GET, POST, OPTIONS');
   next();
 });
 
