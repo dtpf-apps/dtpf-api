@@ -4,12 +4,17 @@ import config from '../config/config';
 import logger from './logger';
 
 export const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: config.email.SMTP_HOST,
+  port: config.email.SMTP_PORT,
+  secure: false,
   pool: true,
   maxConnections: 2,
   auth: {
-    user: config.email.EMAIL,
-    pass: config.email.EMAIL_PASSWORD,
+    user: config.email.SMTP_USER,
+    pass: config.email.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 

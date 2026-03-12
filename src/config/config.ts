@@ -29,9 +29,12 @@ const CONFIG: Record<string, IConfig> = {
       PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
     email: {
-      EMAIL: process.env.EMAIL || '',
-      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
-      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'davidpizarrofrick@gmail.com',
+      SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
+      SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
+      SMTP_USER: process.env.SMTP_USER || '',
+      SMTP_PASS: process.env.SMTP_PASS || '',
+      EMAIL_FROM: process.env.EMAIL_FROM || 'contacto@dtpf.es',
+      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'dtpf@dtpf.es',
     },
   },
   production: {
@@ -51,9 +54,12 @@ const CONFIG: Record<string, IConfig> = {
       PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
     email: {
-      EMAIL: process.env.EMAIL || '',
-      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
-      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'davidpizarrofrick@gmail.com',
+      SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
+      SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
+      SMTP_USER: process.env.SMTP_USER || '',
+      SMTP_PASS: process.env.SMTP_PASS || '',
+      EMAIL_FROM: process.env.EMAIL_FROM || 'contacto@dtpf.es',
+      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'dtpf@dtpf.es',
     },
   },
 };
