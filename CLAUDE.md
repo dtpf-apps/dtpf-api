@@ -25,18 +25,18 @@ pnpm test:coverage   # Run tests with v8 coverage report
 
 ### Testing
 
-Vitest 4 with globals. **38 tests** across 5 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
+Vitest 4 with globals. **51 tests** across 5 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
 
 ```
 test/
 ├── helpers/mocks.ts                  # Mock factories (req/res/next, valid contact body)
 ├── controllers/
-│   ├── contact.test.ts               # 21 tests — all 5 anti-spam layers + validation + happy path
+│   ├── contact.test.ts               # 28 tests — all 5 anti-spam layers + validation + happy path
 │   └── utils.test.ts                 # 1 test — health check
 ├── middlewares/error.test.ts         # 3 tests — error middleware
 └── services/
-    ├── email.test.ts                 # 5 tests — sendEmail retry logic, verifyEmailConnection
-    └── emailTemplates.test.ts        # 8 tests — HTML generation, XSS escaping
+    ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
+    └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
 ```
 
 Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `vi.useFakeTimers()` for retry delays, unique IPs per test to avoid rate limit state leakage.

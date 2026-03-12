@@ -42,12 +42,6 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,json,md}\""
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "bcrypt",
-      "sharp"
-    ]
-  },
   "prettier": {
     "printWidth": 110,
     "semi": true,
