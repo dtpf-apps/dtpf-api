@@ -68,7 +68,7 @@ src/
 │   ├── contact.ts               # POST /contact-me
 │   └── utils.ts                 # GET /connection
 ├── services/
-│   ├── email.ts                 # Nodemailer Gmail SMTP with retry
+│   ├── email.ts                 # Nodemailer SMTP with retry (Stalwart Mail Server)
 │   ├── emailTemplates.ts        # Styled HTML email template (Ocean Teal design)
 │   └── logger.ts                # Pino structured logging
 ├── utils/constants.ts
@@ -97,7 +97,7 @@ src/
 When a contact form is submitted, the backend:
 1. Saves to MongoDB
 2. Sends styled HTML email to `NOTIFICATION_TO` address (non-blocking)
-3. Sets `replyTo` to the sender's email for easy Gmail replies
+3. Sets `replyTo` to the sender's email for easy replies
 
 Email template matches the dtpf.es visual identity (dark bg, Ocean Teal accents, card layout).
 
@@ -122,9 +122,12 @@ Email template matches the dtpf.es visual identity (dark bg, Ocean Teal accents,
 | `DAUTH_DOMAIN_NAME` | `dtpf` | Dauth domain name |
 | `DAUTH_DOMAIN_URL` | `http://localhost:5185` | Dauth frontend URL |
 | `DAUTH_PREVIOUS_TSK` | _(empty)_ | For zero-downtime TSK rotation |
-| `EMAIL` | `dtpf.apps@gmail.com` | Gmail SMTP sender |
-| `EMAIL_PASSWORD` | `<app-password>` | Gmail app password |
-| `NOTIFICATION_TO` | `your@email.com` | Where to receive contact notifications |
+| `SMTP_HOST` | `10.5.0.46` | Stalwart Mail Server host |
+| `SMTP_PORT` | `587` | SMTP submission port |
+| `SMTP_USER` | `contacto` | SMTP auth username (without domain) |
+| `SMTP_PASS` | `<password>` | SMTP auth password |
+| `EMAIL_FROM` | `contacto@dtpf.es` | Sender email address |
+| `NOTIFICATION_TO` | `dtpf@dtpf.es` | Where to receive contact notifications |
 
 ## Code Style
 

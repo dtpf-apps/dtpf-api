@@ -53,7 +53,7 @@ vi.mock('../../src/services/logger', () => {
 
 vi.mock('../../src/config/config', () => ({
   default: {
-    email: { EMAIL: 'sender@gmail.com', EMAIL_PASSWORD: 'pass', NOTIFICATION_TO: 'to@gmail.com' },
+    email: { EMAIL: 'sender@gmail.com', EMAIL_PASSWORD: 'pass', NOTIFICATION_TO: 'to@gmail.com', SMTP_USER: 'test', EMAIL_FROM: 'sender@gmail.com', SMTP_HOST: 'localhost', SMTP_PORT: 587, SMTP_PASS: 'pass' },
     app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
     db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
     dauth: { TSK: 'test-tsk', DOMAIN_NAME: 'dtpf', DOMAIN_URL: 'http://localhost:5185', PREVIOUS_TSK: '' },
