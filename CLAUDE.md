@@ -6,9 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 5, TypeScript 5.9, and MongoDB (Mongoose 9). Package manager: **pnpm**.
 
-Serves two purposes:
-1. **Contact form API** — receives messages, stores in MongoDB, sends email notification
-2. **Auth proxy (BFF)** — `dauthRouter` from `dauth-md-node` handles auth code exchange for dauth integration
+Serves as the **contact form API** — receives messages, stores in MongoDB, sends email notification via Stalwart Mail Server.
 
 ## Commands
 
@@ -52,7 +50,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 
 ```
 src/
-├── config/config.ts             # Typed config (app, db, dauth, email)
+├── config/config.ts             # Typed config (app, db, email)
 ├── controllers/
 │   ├── contact.ts               # Contact form + anti-spam + email notification
 │   └── utils.ts                 # Health check
@@ -78,11 +76,10 @@ src/
 
 ### API Endpoints
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
+| Method | Path                 | Auth   | Description         |
+| ------ | -------------------- | ------ | ------------------- |
 | `POST` | `/api/v1/contact-me` | Public | Submit contact form |
-| `GET` | `/api/v1/connection` | Public | Health check |
-| `*` | `/api/auth/*` | — | dauth BFF proxy (exchange-code, session, etc.) |
+| `GET`  | `/api/v1/connection` | Public | Health check        |
 
 ### Contact Form Anti-Spam (5 layers)
 
@@ -95,6 +92,7 @@ src/
 ### Email Notifications
 
 When a contact form is submitted, the backend:
+
 1. Saves to MongoDB
 2. Sends styled HTML email to `NOTIFICATION_TO` address (non-blocking)
 3. Sets `replyTo` to the sender's email for easy replies
@@ -106,28 +104,24 @@ Email template matches the dtpf.es visual identity (dark bg, Ocean Teal accents,
 - **Structured logging** via pino + pino-http (JSON output)
 - **Async/await** throughout all controllers
 - **Error messages** in Spanish
-- **CORS** whitelist: dauth URL, localhost:3000, dtpf.es, dev.dtpf.es
+- **CORS** whitelist: localhost:3000, dtpf.es, dev.dtpf.es
 
 ## Environment Variables
 
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `API_VERSION` | `v1` | API version prefix |
-| `IP_SERVER` | `127.0.0.1` | Server bind address |
-| `IP_MONGO_DB` | `127.0.0.1` | MongoDB host |
-| `PORT_MONGO_DB` | `27019` | MongoDB port |
-| `DB_NAME` | `dtpf` | Database name |
-| `PORT_SERVER` | `3998` | Express port |
-| `DAUTH_TSK` | `<secret>` | Dauth tenant secret key |
-| `DAUTH_DOMAIN_NAME` | `dtpf` | Dauth domain name |
-| `DAUTH_DOMAIN_URL` | `http://localhost:5185` | Dauth frontend URL |
-| `DAUTH_PREVIOUS_TSK` | _(empty)_ | For zero-downtime TSK rotation |
-| `SMTP_HOST` | `10.5.0.46` | Stalwart Mail Server host |
-| `SMTP_PORT` | `587` | SMTP submission port |
-| `SMTP_USER` | `contacto` | SMTP auth username (without domain) |
-| `SMTP_PASS` | `<password>` | SMTP auth password |
-| `EMAIL_FROM` | `contacto@dtpf.es` | Sender email address |
-| `NOTIFICATION_TO` | `dtpf@dtpf.es` | Where to receive contact notifications |
+| Variable          | Example            | Description                            |
+| ----------------- | ------------------ | -------------------------------------- |
+| `API_VERSION`     | `v1`               | API version prefix                     |
+| `IP_SERVER`       | `127.0.0.1`        | Server bind address                    |
+| `IP_MONGO_DB`     | `127.0.0.1`        | MongoDB host                           |
+| `PORT_MONGO_DB`   | `27019`            | MongoDB port                           |
+| `DB_NAME`         | `dtpf`             | Database name                          |
+| `PORT_SERVER`     | `3998`             | Express port                           |
+| `SMTP_HOST`       | `10.5.0.46`        | Stalwart Mail Server host              |
+| `SMTP_PORT`       | `587`              | SMTP submission port                   |
+| `SMTP_USER`       | `contacto`         | SMTP auth username (without domain)    |
+| `SMTP_PASS`       | `<password>`       | SMTP auth password                     |
+| `EMAIL_FROM`      | `contacto@dtpf.es` | Sender email address                   |
+| `NOTIFICATION_TO` | `dtpf@dtpf.es`     | Where to receive contact notifications |
 
 ## Code Style
 
