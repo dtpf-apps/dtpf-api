@@ -9,8 +9,7 @@ function getEnvPath(env: string | undefined): string {
 }
 
 dotenv.config({ path: getEnvPath(process.env.NODE_ENV) });
-const ENV =
-  process.env.NODE_ENV === stagingStage ? productionStage : process.env.NODE_ENV || developmentStage;
+const ENV = process.env.NODE_ENV === stagingStage ? productionStage : process.env.NODE_ENV || developmentStage;
 
 const CONFIG: Record<string, IConfig> = {
   development: {
@@ -22,6 +21,12 @@ const CONFIG: Record<string, IConfig> = {
     db: {
       MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
       PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27019,
+    },
+    dauth: {
+      TSK: process.env.DAUTH_TSK || '',
+      DOMAIN_NAME: process.env.DAUTH_DOMAIN_NAME || '',
+      DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
+      PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
     email: {
       SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
@@ -41,6 +46,12 @@ const CONFIG: Record<string, IConfig> = {
     db: {
       MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
       PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27018,
+    },
+    dauth: {
+      TSK: process.env.DAUTH_TSK || '',
+      DOMAIN_NAME: process.env.DAUTH_DOMAIN_NAME || '',
+      DOMAIN_URL: process.env.DAUTH_DOMAIN_URL || '',
+      PREVIOUS_TSK: process.env.DAUTH_PREVIOUS_TSK || undefined,
     },
     email: {
       SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',

@@ -8,6 +8,12 @@ export interface IConfig {
     MONGO_URL: string;
     PORT_MONGO_DB: number;
   };
+  dauth: {
+    TSK: string;
+    DOMAIN_NAME: string;
+    DOMAIN_URL: string;
+    PREVIOUS_TSK?: string;
+  };
   email: {
     SMTP_HOST: string;
     SMTP_PORT: number;

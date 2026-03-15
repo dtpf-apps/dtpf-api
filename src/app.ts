@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import pinoHttp from 'pino-http';
+import { dauthRouter } from 'dauth-md-node/router';
 import config from './config/config';
 import logger from './services/logger';
 
@@ -16,7 +17,7 @@ app.use(express.json());
 app.use(pinoHttp({ logger }));
 
 // CORS
-const allowedOrigins = ['http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
+const allowedOrigins = [config.dauth.DOMAIN_URL, 'http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
 
 app.use((_req: Request, res: Response, next: NextFunction) => {
   const origin = _req.headers.origin;
@@ -24,11 +25,25 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  res.header('Access-Control-Allow-Headers', 'Authorization, Origin, X-Requested-With, Content-Type, Accept');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Authorization, Origin, X-Requested-With, Content-Type, Accept'
+  );
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Allow', 'GET, POST, OPTIONS');
   next();
 });
+
+// Auth proxy (BFF — dauthRouter handles exchange-code, session, logout, user)
+app.use(
+  '/api/auth',
+  dauthRouter({
+    domainName: config.dauth.DOMAIN_NAME,
+    tsk: config.dauth.TSK,
+    dauthUrl: config.dauth.DOMAIN_URL || undefined,
+    previousTsk: config.dauth.PREVIOUS_TSK || undefined,
+  })
+);
 
 // Routes
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
@@ -37,7 +52,10 @@ app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
 app.use(errorMiddleware);
 
 if (process.env.NODE_ENV !== 'development') {
-  app.use('/assets', express.static('client/assets', { maxAge: '1y', immutable: true, redirect: false }));
+  app.use(
+    '/assets',
+    express.static('client/assets', { maxAge: '1y', immutable: true, redirect: false })
+  );
   app.use('/service-worker.js', (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('CDN-Cache-Control', 'no-store');
