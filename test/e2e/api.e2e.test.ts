@@ -53,15 +53,19 @@ vi.mock('../../src/services/logger', () => {
 
 vi.mock('../../src/config/config', () => ({
   default: {
-    email: { EMAIL: 'sender@gmail.com', EMAIL_PASSWORD: 'pass', NOTIFICATION_TO: 'to@gmail.com', SMTP_USER: 'test', EMAIL_FROM: 'sender@gmail.com', SMTP_HOST: 'localhost', SMTP_PORT: 587, SMTP_PASS: 'pass' },
+    email: {
+      EMAIL: 'sender@gmail.com',
+      EMAIL_PASSWORD: 'pass',
+      NOTIFICATION_TO: 'to@gmail.com',
+      SMTP_USER: 'test',
+      EMAIL_FROM: 'sender@gmail.com',
+      SMTP_HOST: 'localhost',
+      SMTP_PORT: 587,
+      SMTP_PASS: 'pass',
+    },
     app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
     db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
-    dauth: { TSK: 'test-tsk', DOMAIN_NAME: 'dtpf', DOMAIN_URL: 'http://localhost:5185', PREVIOUS_TSK: '' },
   },
-}));
-
-vi.mock('dauth-md-node/router', () => ({
-  dauthRouter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
 import request from 'supertest';
@@ -277,18 +281,14 @@ describe('E2E: Contact form', () => {
 
 describe('E2E: CORS headers', () => {
   it('sets CORS headers for allowed origin', async () => {
-    const res = await request(app)
-      .get('/api/v1/connection')
-      .set('Origin', 'http://localhost:3000');
+    const res = await request(app).get('/api/v1/connection').set('Origin', 'http://localhost:3000');
 
     expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
     expect(res.headers['access-control-allow-methods']).toContain('POST');
   });
 
   it('does not set Access-Control-Allow-Origin for disallowed origin', async () => {
-    const res = await request(app)
-      .get('/api/v1/connection')
-      .set('Origin', 'http://evil.com');
+    const res = await request(app).get('/api/v1/connection').set('Origin', 'http://evil.com');
 
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
