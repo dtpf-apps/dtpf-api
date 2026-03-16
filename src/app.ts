@@ -13,7 +13,19 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(pinoHttp({ logger }));
+app.use(
+  pinoHttp({
+    logger,
+    autoLogging: {
+      ignore: (req) => (req as express.Request).path === '/api/v1/connection',
+    },
+    serializers: {
+      req(req) {
+        return { method: req.method, url: req.url, id: req.id };
+      },
+    },
+  })
+);
 
 // CORS
 const allowedOrigins = ['http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
