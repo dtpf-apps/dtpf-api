@@ -4,6 +4,7 @@ import pinoHttp from 'pino-http';
 import config from './config/config';
 import logger from './services/logger';
 
+import clientErrorsRoutes from './routers/clientErrors';
 import contactRoutes from './routers/contact';
 import utilsRoutes from './routers/utils';
 import { errorMiddleware } from './middlewares/error.middleware';
@@ -43,6 +44,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 });
 
 // Routes
+app.use(`/api/${config.app.API_VERSION}`, clientErrorsRoutes);
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
 app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
 
