@@ -1,5 +1,5 @@
 {
-  "name": "dtpf-portfolio-backend",
+  "name": "dtpf-api",
   "version": "0.0.5",
   "description": "Backend para portafolio personal",
   "main": "dist/index.js",
