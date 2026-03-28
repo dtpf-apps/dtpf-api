@@ -31,7 +31,14 @@ vi.mock('../../src/services/logger', () => ({
 
 vi.mock('../../src/config/config', () => ({
   default: {
-    email: { SMTP_HOST: '10.5.0.46', SMTP_PORT: 587, SMTP_USER: 'contacto', SMTP_PASS: 'pass', EMAIL_FROM: 'contacto@dtpf.es', NOTIFICATION_TO: 'dtpf@dtpf.es' },
+    email: {
+      SMTP_HOST: '10.5.0.46',
+      SMTP_PORT: 587,
+      SMTP_USER: 'contacto',
+      SMTP_PASS: 'pass',
+      EMAIL_FROM: 'contacto@dtpf.es',
+      NOTIFICATION_TO: 'dtpf@dtpf.es',
+    },
     app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
     db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
     dauth: { TSK: '', DOMAIN_NAME: '', DOMAIN_URL: '' },
@@ -72,7 +79,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(mockSave).toHaveBeenCalled();
     });
   });
@@ -88,7 +95,19 @@ describe('contactMe controller', () => {
       await contactMe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res._body.message).toContain('obligatorios');
+      expect(res._body.message).toContain('email no es valido');
+    });
+
+    it('returns 400 if email format is invalid', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ email: 'not-an-email' }),
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res._body.message).toContain('email no es valido');
     });
 
     it('returns 400 if message is missing', async () => {
@@ -100,7 +119,7 @@ describe('contactMe controller', () => {
       await contactMe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res._body.message).toContain('obligatorios');
+      expect(res._body.message).toContain('mensaje es obligatorio');
     });
 
     it('returns 400 if message is too short', async () => {
@@ -115,6 +134,20 @@ describe('contactMe controller', () => {
       expect(res._body.message).toContain('10 caracteres');
     });
 
+    it('returns 400 if message exceeds max length', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ message: 'a'.repeat(5001) }),
+        ip: `val-maxlen-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res._body.message).toContain('5000 caracteres');
+    });
+
     it('accepts valid data', async () => {
       const req = createMockRequest({
         body: createValidContactBody(),
@@ -123,7 +156,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(res._body.message).toBe('Mensaje enviado correctamente.');
     });
   });
@@ -142,6 +175,18 @@ describe('contactMe controller', () => {
       expect(mockSave).not.toHaveBeenCalled();
     });
 
+    it('returns fake 200 if _t is missing (mandatory)', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ _t: undefined }),
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockSave).not.toHaveBeenCalled();
+    });
+
     it('continues if form submitted after 3 seconds', async () => {
       const req = createMockRequest({
         body: createValidContactBody({ _t: Date.now() - 5000 }),
@@ -150,7 +195,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(mockSave).toHaveBeenCalled();
     });
   });
@@ -168,7 +213,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
     });
 
     it('returns 400 if message has more than 5 URLs', async () => {
@@ -214,7 +259,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(mockSave).toHaveBeenCalled();
     });
 
@@ -223,18 +268,18 @@ describe('contactMe controller', () => {
 
       for (let i = 0; i < 3; i++) {
         const req = createMockRequest({
-          body: createValidContactBody({ email: `user${i}@test.com` }),
+          body: createValidContactBody({ email: `user${i}@example.com` }),
           ip,
           headers: {},
         });
         const res = createMockResponse();
         await contactMe(req, res);
-        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.status).toHaveBeenCalledWith(201);
       }
 
       // 4th request should be rejected
       const req = createMockRequest({
-        body: createValidContactBody({ email: 'user4@test.com' }),
+        body: createValidContactBody({ email: 'user4@example.com' }),
         ip,
         headers: {},
       });
@@ -243,7 +288,7 @@ describe('contactMe controller', () => {
       await contactMe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(429);
-      expect(res._body.message).toContain('demasiados mensajes');
+      expect(res._body.message).toContain('Demasiadas solicitudes');
     });
   });
 
@@ -295,7 +340,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(mockSave).toHaveBeenCalled();
     });
   });
@@ -313,7 +358,7 @@ describe('contactMe controller', () => {
       await contactMe(req, res);
 
       expect(mockSave).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
     });
 
     it('sends email notification', async () => {
@@ -342,21 +387,6 @@ describe('contactMe controller', () => {
       const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
       expect(constructorCall.email).toBe('test@example.com');
     });
-
-    it('returns 500 if save fails', async () => {
-      mockSave.mockResolvedValue(null);
-
-      const req = createMockRequest({
-        body: createValidContactBody(),
-        ip: `hp-fail-${Date.now()}`,
-        headers: {},
-      });
-      const res = createMockResponse();
-
-      await contactMe(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-    });
   });
 
   // --- x-forwarded-for ---
@@ -366,18 +396,18 @@ describe('contactMe controller', () => {
 
       for (let i = 0; i < 3; i++) {
         const req = createMockRequest({
-          body: createValidContactBody({ email: `xff${i}@test.com` }),
+          body: createValidContactBody({ email: `xff${i}@example.com` }),
           headers: { 'x-forwarded-for': forwardedIp },
           ip: '127.0.0.1',
         });
         const res = createMockResponse();
         await contactMe(req, res);
-        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.status).toHaveBeenCalledWith(201);
       }
 
       // 4th request with same forwarded IP should be rejected
       const req = createMockRequest({
-        body: createValidContactBody({ email: 'xff4@test.com' }),
+        body: createValidContactBody({ email: 'xff4@example.com' }),
         headers: { 'x-forwarded-for': forwardedIp },
         ip: '127.0.0.1',
       });
@@ -401,12 +431,12 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
       expect(constructorCall.email).toBe('user@gmail.com');
     });
 
-    it('normalizes email with leading/trailing spaces via lowercase', async () => {
+    it('accepts email with leading/trailing spaces after trim', async () => {
       const req = createMockRequest({
         body: createValidContactBody({ email: '  USER@Example.COM  ' }),
         ip: `norm-spaces-${Date.now()}`,
@@ -416,7 +446,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
       expect(constructorCall.email).toBe('  user@example.com  ');
     });
@@ -434,7 +464,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
       expect(constructorCall.message).toBe('Este es un mensaje con espacios.');
     });
@@ -470,7 +500,7 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
     });
   });
 
@@ -486,8 +516,42 @@ describe('contactMe controller', () => {
 
       await contactMe(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(mockSave).toHaveBeenCalled();
+    });
+  });
+
+  // --- Name sanitization ---
+  describe('name sanitization', () => {
+    it('truncates name to 100 characters', async () => {
+      const longName = 'A'.repeat(200);
+      const req = createMockRequest({
+        body: createValidContactBody({ name: longName }),
+        ip: `name-trunc-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
+      expect(constructorCall.name).toHaveLength(100);
+    });
+
+    it('defaults to empty string if name is not a string', async () => {
+      const req = createMockRequest({
+        body: createValidContactBody({ name: 123 }),
+        ip: `name-default-${Date.now()}`,
+        headers: {},
+      });
+      const res = createMockResponse();
+
+      await contactMe(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      const constructorCall = mockContactConstructor.mock.calls.at(-1)[0];
+      expect(constructorCall.name).toBe('');
     });
   });
 

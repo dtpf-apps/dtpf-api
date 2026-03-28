@@ -1,4 +1,4 @@
-import { reportClientError, ipRequests } from '../../src/controllers/clientErrors';
+import { reportClientError, rateLimiter } from '../../src/controllers/clientErrors';
 import { createMockRequest, createMockResponse } from '../helpers/mocks';
 
 const mockLoggerError = vi.hoisted(() => vi.fn());
@@ -12,7 +12,7 @@ function createValidErrorBody(overrides: Record<string, unknown> = {}) {
     message: 'TypeError: Cannot read property of undefined',
     source: 'error-boundary',
     stack: 'TypeError: Cannot read property\n    at Component.render (app.js:42)',
-    url: 'https://dtpf.es/projects',
+    url: 'https://example.com/projects',
     userAgent: 'Mozilla/5.0',
     timestamp: '2026-03-16T12:00:00.000Z',
     ...overrides,
@@ -22,7 +22,7 @@ function createValidErrorBody(overrides: Record<string, unknown> = {}) {
 describe('reportClientError controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    ipRequests.clear();
+    rateLimiter.ipRequests.clear();
   });
 
   describe('validation', () => {
@@ -33,7 +33,7 @@ describe('reportClientError controller', () => {
       reportClientError(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res._body.message).toContain('message is required');
+      expect(res._body.message).toContain('message es obligatorio');
     });
 
     it('rejects non-string message', () => {
@@ -43,7 +43,7 @@ describe('reportClientError controller', () => {
       reportClientError(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res._body.message).toContain('message is required');
+      expect(res._body.message).toContain('message es obligatorio');
     });
 
     it('rejects missing source', () => {
@@ -170,7 +170,7 @@ describe('reportClientError controller', () => {
     });
 
     it('truncates url to 500 characters', () => {
-      const longUrl = 'https://dtpf.es/' + 'a'.repeat(600);
+      const longUrl = 'https://example.com/' + 'a'.repeat(600);
       const req = createMockRequest({
         body: createValidErrorBody({ url: longUrl }),
         ip: '10.2.0.3',
@@ -238,7 +238,7 @@ describe('reportClientError controller', () => {
       reportClientError(req, res);
 
       expect(res.status).toHaveBeenCalledWith(429);
-      expect(res._body.message).toContain('Too many error reports');
+      expect(res._body.message).toContain('Demasiados reportes de error');
     });
 
     it('does not affect different IPs', () => {
@@ -268,7 +268,7 @@ describe('reportClientError controller', () => {
       reportClientError(req, res);
 
       expect(res.status).toHaveBeenCalledWith(204);
-      expect(ipRequests.has('203.0.113.1')).toBe(true);
+      expect(rateLimiter.ipRequests.has('203.0.113.1')).toBe(true);
     });
   });
 });

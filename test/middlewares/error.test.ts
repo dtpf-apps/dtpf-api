@@ -13,7 +13,7 @@ describe('errorMiddleware', () => {
     vi.clearAllMocks();
   });
 
-  it('responds with 500 and error message', () => {
+  it('responds with 500 and error message for generic errors', () => {
     const req = createMockRequest();
     const res = createMockResponse();
     const next = createMockNext();
@@ -22,10 +22,10 @@ describe('errorMiddleware', () => {
     errorMiddleware(error, req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({ message: 'Error interno del servidor' });
+    expect(res.send).toHaveBeenCalledWith({ status: 500, message: 'Error interno del servidor' });
   });
 
-  it('logs the error', () => {
+  it('logs the error for generic errors', () => {
     const req = createMockRequest();
     const res = createMockResponse();
     const next = createMockNext();
@@ -47,5 +47,30 @@ describe('errorMiddleware', () => {
     const body = res.send.mock.calls[0][0];
     expect(body.message).not.toContain('Sensitive');
     expect(body.message).toBe('Error interno del servidor');
+  });
+
+  it('returns 400 for JSON parse errors', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const error = Object.assign(new SyntaxError('Unexpected token'), { type: 'entity.parse.failed' });
+
+    errorMiddleware(error as Error & { type?: string }, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res._body.message).toBe('JSON invalido.');
+  });
+
+  it('returns 400 for ValidationError', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const error = new Error('Validation failed');
+    error.name = 'ValidationError';
+
+    errorMiddleware(error, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res._body.message).toBe('Datos de entrada invalidos.');
   });
 });

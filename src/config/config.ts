@@ -12,44 +12,31 @@ dotenv.config({ path: getEnvPath(process.env.NODE_ENV) });
 const ENV =
   process.env.NODE_ENV === stagingStage ? productionStage : process.env.NODE_ENV || developmentStage;
 
-const CONFIG: Record<string, IConfig> = {
-  development: {
-    app: {
-      URL: `http://${process.env.IP_SERVER}:${process.env.PORT_SERVER}/api/${process.env.API_VERSION}`,
-      PORT: Number(process.env.PORT_SERVER) || 3998,
-      API_VERSION: process.env.API_VERSION || 'v1',
-    },
-    db: {
-      MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
-      PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27019,
-    },
-    email: {
-      SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
-      SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
-      SMTP_USER: process.env.SMTP_USER || '',
-      SMTP_PASS: process.env.SMTP_PASS || '',
-      EMAIL_FROM: process.env.EMAIL_FROM || 'contacto@dtpf.es',
-      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'dtpf@dtpf.es',
-    },
+const base: IConfig = {
+  app: {
+    URL: `http://${process.env.IP_SERVER}:${process.env.PORT_SERVER}/api/${process.env.API_VERSION}`,
+    PORT: Number(process.env.PORT_SERVER) || 3998,
+    API_VERSION: process.env.API_VERSION || 'v1',
   },
+  db: {
+    MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
+    PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27019,
+  },
+  email: {
+    SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
+    SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
+    SMTP_USER: process.env.SMTP_USER || '',
+    SMTP_PASS: process.env.SMTP_PASS || '',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'contacto@dtpf.es',
+    NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'dtpf@dtpf.es',
+  },
+};
+
+const CONFIG: Record<string, IConfig> = {
+  development: base,
   production: {
-    app: {
-      URL: `http://${process.env.IP_SERVER}:${process.env.PORT_SERVER}/api/${process.env.API_VERSION}`,
-      PORT: Number(process.env.PORT_SERVER) || 3998,
-      API_VERSION: process.env.API_VERSION || 'v1',
-    },
-    db: {
-      MONGO_URL: `mongodb://${process.env.IP_MONGO_DB}:${process.env.PORT_MONGO_DB}/${process.env.DB_NAME}`,
-      PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27018,
-    },
-    email: {
-      SMTP_HOST: process.env.SMTP_HOST || '10.5.0.46',
-      SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
-      SMTP_USER: process.env.SMTP_USER || '',
-      SMTP_PASS: process.env.SMTP_PASS || '',
-      EMAIL_FROM: process.env.EMAIL_FROM || 'contacto@dtpf.es',
-      NOTIFICATION_TO: process.env.NOTIFICATION_TO || 'dtpf@dtpf.es',
-    },
+    ...base,
+    db: { ...base.db, PORT_MONGO_DB: Number(process.env.PORT_MONGO_DB) || 27018 },
   },
 };
 

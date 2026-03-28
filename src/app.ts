@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import compression from 'compression';
 import pinoHttp from 'pino-http';
 import config from './config/config';
 import logger from './services/logger';
@@ -12,8 +13,9 @@ import { errorMiddleware } from './middlewares/error.middleware';
 const app = express();
 
 app.disable('x-powered-by');
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: false, limit: '16kb' }));
+app.use(express.json({ limit: '16kb' }));
+app.use(compression());
 app.use(
   pinoHttp({
     logger,
@@ -39,7 +41,18 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   }
   res.header('Access-Control-Allow-Headers', 'Authorization, Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Allow', 'GET, POST, OPTIONS');
+  if (_req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+// Security headers
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();
 });
 

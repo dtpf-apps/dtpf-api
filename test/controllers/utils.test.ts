@@ -9,6 +9,6 @@ describe('connection controller', () => {
     connection(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({ status: 200 });
+    expect(res.send).toHaveBeenCalledWith({ status: 200, message: 'ok' });
   });
 });

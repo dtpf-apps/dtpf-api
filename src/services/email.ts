@@ -9,12 +9,15 @@ export const transporter = nodemailer.createTransport({
   secure: false,
   pool: true,
   maxConnections: 2,
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 30_000,
   auth: {
     user: config.email.SMTP_USER,
     pass: config.email.SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: process.env.NODE_ENV === 'production',
   },
 });
 

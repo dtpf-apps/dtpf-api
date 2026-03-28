@@ -4,35 +4,28 @@ import config from '../config/config';
 import { sendEmail } from '../services/email';
 import { contactNotificationHtml } from '../services/emailTemplates';
 import logger from '../services/logger';
+import { getClientIp, createRateLimiter, isRateLimited } from '../utils/rateLimit';
 
-// In-memory rate limit by IP (reset on server restart — good enough for a portfolio)
-const ipRequests = new Map<string, number[]>();
-const IP_MAX_REQUESTS = 3;
-const IP_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const rateLimiter = createRateLimiter(3, 60 * 60 * 1000); // 3 per hour
 const EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MIN_SUBMIT_TIME_MS = 3000; // 3 seconds minimum to fill form
 const MAX_URLS_IN_MESSAGE = 5;
 const MIN_MESSAGE_LENGTH = 10;
+const MAX_NAME_LENGTH = 100;
+const MAX_MESSAGE_LENGTH = 5000;
 
-function cleanExpiredEntries() {
-  const now = Date.now();
-  for (const [ip, timestamps] of ipRequests) {
-    const valid = timestamps.filter((t) => now - t < IP_WINDOW_MS);
-    if (valid.length === 0) {
-      ipRequests.delete(ip);
-    } else {
-      ipRequests.set(ip, valid);
-    }
-  }
-}
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function countUrls(text: string): number {
   const urlPattern = /https?:\/\/|www\./gi;
   return (text.match(urlPattern) || []).length;
 }
 
-function getClientIp(req: Request): string {
-  return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+function sanitizeForHeader(str: string): string {
+  return str
+    .replace(/[\r\n\t]/g, ' ')
+    .trim()
+    .slice(0, 100);
 }
 
 export async function contactMe(req: Request, res: Response) {
@@ -45,22 +38,36 @@ export async function contactMe(req: Request, res: Response) {
       return res.status(200).send({ status: 200, message: 'Mensaje enviado correctamente.' });
     }
 
-    // Validation
-    if (!email || !message) {
-      return res.status(400).send({ status: 400, message: 'El email y el mensaje son obligatorios.' });
+    // Email validation
+    if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+      return res.status(400).send({ status: 400, message: 'El email no es valido.' });
     }
 
-    if (typeof message !== 'string' || message.trim().length < MIN_MESSAGE_LENGTH) {
-      return res.status(400).send({ status: 400, message: `El mensaje debe tener al menos ${MIN_MESSAGE_LENGTH} caracteres.` });
+    // Message validation
+    if (!message || typeof message !== 'string') {
+      return res.status(400).send({ status: 400, message: 'El mensaje es obligatorio.' });
     }
 
-    // Time trap: reject if form submitted too fast
-    if (_t && typeof _t === 'number') {
-      const elapsed = Date.now() - _t;
-      if (elapsed < MIN_SUBMIT_TIME_MS) {
-        // Fake success
-        return res.status(200).send({ status: 200, message: 'Mensaje enviado correctamente.' });
-      }
+    if (message.trim().length < MIN_MESSAGE_LENGTH) {
+      return res.status(400).send({
+        status: 400,
+        message: `El mensaje debe tener al menos ${MIN_MESSAGE_LENGTH} caracteres.`,
+      });
+    }
+
+    if (message.trim().length > MAX_MESSAGE_LENGTH) {
+      return res.status(400).send({
+        status: 400,
+        message: `El mensaje no puede superar los ${MAX_MESSAGE_LENGTH} caracteres.`,
+      });
+    }
+
+    // Name sanitization
+    const safeName = typeof name === 'string' ? name.trim().slice(0, MAX_NAME_LENGTH) : '';
+
+    // Time trap: reject if form submitted too fast (mandatory — no _t means bot)
+    if (!_t || typeof _t !== 'number' || Date.now() - _t < MIN_SUBMIT_TIME_MS) {
+      return res.status(200).send({ status: 200, message: 'Mensaje enviado correctamente.' });
     }
 
     // URL spam check
@@ -70,18 +77,16 @@ export async function contactMe(req: Request, res: Response) {
 
     // IP rate limit
     const clientIp = getClientIp(req);
-    cleanExpiredEntries();
-    const ipTimestamps = ipRequests.get(clientIp) || [];
-    const now = Date.now();
-    const recentRequests = ipTimestamps.filter((t) => now - t < IP_WINDOW_MS);
-    if (recentRequests.length >= IP_MAX_REQUESTS) {
+    if (isRateLimited(rateLimiter, clientIp)) {
+      logger.warn({ ip: clientIp }, 'Rate limit excedido');
       return res.status(429).send({
         status: 429,
-        message: 'Has enviado demasiados mensajes. Intentalo de nuevo mas tarde.',
+        message: 'Demasiadas solicitudes. Intentalo mas tarde.',
       });
     }
 
     // Email cooldown (24h per email address)
+    const now = Date.now();
     const lastContact = await Contact.findOne({ email: email.toLowerCase() }).sort({ date: -1 });
     if (lastContact) {
       const timeSinceLast = now - new Date(lastContact.date).getTime();
@@ -97,17 +102,10 @@ export async function contactMe(req: Request, res: Response) {
     // Save to MongoDB
     const contact = new Contact({
       email: email.toLowerCase(),
-      name: name || '',
+      name: safeName,
       message: message.trim(),
     });
-    const contactStored = await contact.save();
-    if (!contactStored) {
-      return res.status(500).send({ status: 500, message: 'Error al guardar el mensaje.' });
-    }
-
-    // Record IP request
-    recentRequests.push(now);
-    ipRequests.set(clientIp, recentRequests);
+    await contact.save();
 
     // Send notification email (non-blocking)
     if (config.email.SMTP_USER) {
@@ -124,9 +122,9 @@ export async function contactMe(req: Request, res: Response) {
         from: `"dtpf.es" <${config.email.EMAIL_FROM}>`,
         to: config.email.NOTIFICATION_TO,
         replyTo: email.toLowerCase(),
-        subject: `Nuevo mensaje de ${name || email} — dtpf.es`,
+        subject: `Nuevo mensaje de ${sanitizeForHeader(safeName || email)} — dtpf.es`,
         html: contactNotificationHtml({
-          name: name || 'Sin nombre',
+          name: safeName || 'Sin nombre',
           email: email.toLowerCase(),
           message: message.trim(),
           date: dateStr,
@@ -136,7 +134,7 @@ export async function contactMe(req: Request, res: Response) {
       });
     }
 
-    return res.status(200).send({ status: 200, message: 'Mensaje enviado correctamente.' });
+    return res.status(201).send({ status: 201, message: 'Mensaje enviado correctamente.' });
   } catch {
     return res.status(500).send({ status: 500, message: 'Error del servidor.' });
   }

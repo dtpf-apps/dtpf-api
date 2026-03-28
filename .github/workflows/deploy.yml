@@ -60,7 +60,7 @@ jobs:
           RSYNC_SSH="ssh -o StrictHostKeyChecking=no -p ${{ env.APP_SERVER_PORT }}"
 
           # Send compiled artifacts
-          rsync -az --delete \
+          rsync -az --delete --exclude='*.map' \
             -e "$RSYNC_SSH" \
             dist/ ${{ env.APP_SERVER }}:$DEPLOY_DIR/src/
 

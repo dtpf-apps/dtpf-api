@@ -52,6 +52,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 src/
 ├── config/config.ts             # Typed config (app, db, email)
 ├── controllers/
+│   ├── clientErrors.ts          # Client error reporting + rate limit
 │   ├── contact.ts               # Contact form + anti-spam + email notification
 │   └── utils.ts                 # Health check
 ├── interfaces/
@@ -63,23 +64,27 @@ src/
 ├── models/
 │   └── contact.ts               # Contact schema (email, name, message, date)
 ├── routers/
+│   ├── clientErrors.ts          # POST /client-errors
 │   ├── contact.ts               # POST /contact-me
 │   └── utils.ts                 # GET /connection
 ├── services/
 │   ├── email.ts                 # Nodemailer SMTP with retry (Stalwart Mail Server)
 │   ├── emailTemplates.ts        # Styled HTML email template (Ocean Teal design)
 │   └── logger.ts                # Pino structured logging
-├── utils/constants.ts
+├── utils/
+│   ├── constants.ts
+│   └── rateLimit.ts             # Shared rate limiting utility
 ├── app.ts
 └── index.ts
 ```
 
 ### API Endpoints
 
-| Method | Path                 | Auth   | Description         |
-| ------ | -------------------- | ------ | ------------------- |
-| `POST` | `/api/v1/contact-me` | Public | Submit contact form |
-| `GET`  | `/api/v1/connection` | Public | Health check        |
+| Method | Path                    | Auth   | Description                           |
+| ------ | ----------------------- | ------ | ------------------------------------- |
+| `POST` | `/api/v1/contact-me`    | Public | Submit contact form                   |
+| `POST` | `/api/v1/client-errors` | Public | Report frontend errors (rate limited) |
+| `GET`  | `/api/v1/connection`    | Public | Health check                          |
 
 ### Contact Form Anti-Spam (5 layers)
 
