@@ -23,7 +23,7 @@ pnpm test:coverage   # Run tests with v8 coverage report
 
 ### Testing
 
-Vitest 4 with globals. **51 tests** across 5 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
+Vitest 4 with globals. **77 tests** across 6 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
 
 ```
 test/
