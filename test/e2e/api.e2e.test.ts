@@ -98,7 +98,7 @@ describe('E2E: Contact form', () => {
         _t: Date.now() - 10000,
       });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body.message).toBe('Mensaje enviado correctamente.');
     expect(mockSave).toHaveBeenCalled();
   });
@@ -115,7 +115,7 @@ describe('E2E: Contact form', () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain('obligatorios');
+    expect(res.body.message).toBe('El email no es valido.');
   });
 
   it('POST /api/v1/contact-me without message returns 400', async () => {
@@ -130,7 +130,7 @@ describe('E2E: Contact form', () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain('obligatorios');
+    expect(res.body.message).toBe('El mensaje es obligatorio.');
   });
 
   it('POST /api/v1/contact-me with honeypot returns fake 200 but does not save', async () => {
@@ -241,7 +241,7 @@ describe('E2E: Contact form', () => {
           website: '',
           _t: Date.now() - 10000,
         });
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
     }
 
     // 4th request should be rate-limited
@@ -256,7 +256,7 @@ describe('E2E: Contact form', () => {
         _t: Date.now() - 10000,
       });
     expect(res.status).toBe(429);
-    expect(res.body.message).toContain('demasiados mensajes');
+    expect(res.body.message).toContain('Demasiadas solicitudes');
   });
 
   it('rejects email cooldown (same email within 24h)', async () => {
