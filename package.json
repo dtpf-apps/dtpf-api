@@ -1,6 +1,6 @@
 {
   "name": "dtpf-api",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Backend para portafolio personal",
   "main": "dist/index.js",
   "author": "David Thomas Pizarro Frick",
@@ -12,7 +12,7 @@
     "compression": "^1.8.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "mongoose": "^9.3.2",
+    "mongoose": "^9.3.3",
     "nodemailer": "^8.0.4",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0"
@@ -24,13 +24,13 @@
     "@types/node": "~22.19.15",
     "@types/nodemailer": "^7.0.11",
     "@types/supertest": "^7.2.0",
-    "@vitest/coverage-v8": "^4.1.1",
+    "@vitest/coverage-v8": "^4.1.2",
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.2"
   },
   "scripts": {
     "db": "docker start dtpf-mongodb",
