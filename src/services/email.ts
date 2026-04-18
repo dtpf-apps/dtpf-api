@@ -18,6 +18,7 @@ export const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: process.env.NODE_ENV === 'production',
+    servername: 'mail.dtpf.es',
   },
 });
 
