@@ -39,7 +39,7 @@ jobs:
       - name: Install production dependencies
         run: |
           mkdir -p .deploy
-          cp package.json pnpm-lock.yaml .deploy/
+          cp package.json pnpm-lock.yaml pnpm-workspace.yaml .deploy/
           cd .deploy
           pnpm install --prod --frozen-lockfile
 
