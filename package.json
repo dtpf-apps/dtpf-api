@@ -1,6 +1,6 @@
 {
   "name": "dtpf-api",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Backend para portafolio personal",
   "main": "dist/index.js",
   "author": "David Thomas Pizarro Frick",
