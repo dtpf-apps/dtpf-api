@@ -1,6 +1,6 @@
-# dtpf-backend-node
+# dtpf-api
 
-Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handles contact form submissions with 5-layer anti-spam protection, sends styled email notifications via Nodemailer, and provides a BFF auth proxy for dauth integration. Live at [dtpf.es](https://dtpf.es).
+Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handles contact form submissions with 5-layer anti-spam protection, sends styled email notifications via Nodemailer (self-hosted Stalwart SMTP), and collects frontend error reports. Live at [dtpf.es](https://dtpf.es).
 
 ## Tech Stack
 
@@ -8,12 +8,11 @@ Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handl
 |---|---|---|
 | Node.js | 22 | Runtime |
 | Express | 5 | HTTP framework |
-| TypeScript | 5.9 | Type safety |
+| TypeScript | 6.0 | Type safety |
 | MongoDB | 8 | Database |
 | Mongoose | 9 | ODM |
-| Nodemailer | 8 | Email (Gmail SMTP) |
+| Nodemailer | 8 | Email (Stalwart SMTP) |
 | Pino | 10 | Structured JSON logging |
-| dauth-md-node | 4 | Auth BFF proxy |
 | Vitest | 4 | Testing |
 
 ## Prerequisites
@@ -25,8 +24,8 @@ Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handl
 ## Setup
 
 ```bash
-git clone https://github.com/dtpf-apps/dtpf-backend-node.git
-cd dtpf-backend-node
+git clone https://github.com/dtpf-apps/dtpf-api.git
+cd dtpf-api
 pnpm install
 cp .env.development.example .env.development
 ```
@@ -43,6 +42,7 @@ cp .env.development.example .env.development
 | `pnpm test` | Run tests with Vitest |
 | `pnpm test:watch` | Run tests in watch mode |
 | `pnpm test:coverage` | Run tests with v8 coverage report |
+| `pnpm test:e2e` | Run e2e suite (supertest, separate Vitest config) |
 
 ## Environment Variables
 
@@ -54,20 +54,20 @@ cp .env.development.example .env.development
 | `PORT_MONGO_DB` | MongoDB port | `27019` |
 | `DB_NAME` | Database name | `dtpf` |
 | `PORT_SERVER` | Express port | `3998` |
-| `DAUTH_TSK` | dauth tenant secret key | -- |
-| `DAUTH_DOMAIN_NAME` | dauth domain name | `dtpf` |
-| `DAUTH_DOMAIN_URL` | dauth frontend URL | `http://localhost:5185` |
-| `DAUTH_PREVIOUS_TSK` | For zero-downtime TSK rotation | _(empty)_ |
-| `EMAIL` | Gmail SMTP sender address | -- |
-| `EMAIL_PASSWORD` | Gmail app password | -- |
-| `NOTIFICATION_TO` | Recipient for contact notifications | -- |
+| `SMTP_HOST` | Stalwart Mail Server host | `10.5.0.46` |
+| `SMTP_PORT` | SMTP submission port | `587` |
+| `SMTP_USER` | SMTP auth username (without domain) | -- |
+| `SMTP_PASS` | SMTP auth password | -- |
+| `EMAIL_FROM` | Sender email address | `contacto@dtpf.es` |
+| `NOTIFICATION_TO` | Recipient for contact notifications | `dtpf@dtpf.es` |
 
 ## Project Structure
 
 ```
 src/
-├── config/config.ts             # Typed config (app, db, dauth, email)
+├── config/config.ts             # Typed config (app, db, email)
 ├── controllers/
+│   ├── clientErrors.ts          # Frontend error reporting + rate limit
 │   ├── contact.ts               # Contact form + anti-spam + email notification
 │   └── utils.ts                 # Health check
 ├── interfaces/
@@ -75,18 +75,22 @@ src/
 │   ├── contact.interface.ts
 │   └── index.ts
 ├── middlewares/
-│   └── error.middleware.ts
+│   ├── error.middleware.ts
+│   └── securityHeaders.middleware.ts  # CSP + security headers
 ├── models/
 │   └── contact.ts               # Contact schema (email, name, message, date)
 ├── routers/
+│   ├── clientErrors.ts          # POST /client-errors
 │   ├── contact.ts               # POST /contact-me
 │   └── utils.ts                 # GET /connection
 ├── services/
-│   ├── email.ts                 # Nodemailer Gmail SMTP with retry
+│   ├── email.ts                 # Nodemailer SMTP with retry (Stalwart Mail Server)
 │   ├── emailTemplates.ts        # Styled HTML email template (Ocean Teal design)
 │   └── logger.ts                # Pino structured logging
-├── utils/constants.ts
-├── app.ts                       # Express config, CORS, pino-http, route mounting
+├── utils/
+│   ├── constants.ts
+│   └── rateLimit.ts             # Shared in-memory rate limiting
+├── app.ts                       # Express config, CORS, pino-http, security headers, route mounting
 └── index.ts                     # Entry point: MongoDB connection, server start
 ```
 
@@ -99,8 +103,8 @@ All endpoints prefixed with `/api/v1`.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/v1/contact-me` | Public | Submit contact form |
+| `POST` | `/api/v1/client-errors` | Public | Report frontend errors (rate limited) |
 | `GET` | `/api/v1/connection` | Public | Health check |
-| `*` | `/api/auth/*` | -- | dauth BFF proxy (exchange-code, session) |
 
 ## Contact Form Anti-Spam
 
@@ -124,16 +128,17 @@ The email template matches the dtpf.es visual identity (dark background, Ocean T
 
 ## Testing
 
-38 tests across 5 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines).
+79 tests across 7 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, supertest with mocked MongoDB/email) runs via its own Vitest config.
 
 ```bash
 pnpm test
 pnpm test:coverage
+pnpm test:e2e
 ```
 
 ## Deploy
 
-GitHub Actions CI/CD. Push triggers build on self-hosted runner + rsync to app server.
+Gitea Actions CI/CD (`.gitea/workflows/deploy.yml`): push runs tests + build on a self-hosted runner, rsyncs `dist/` and production `node_modules` to the app server, and reloads PM2. The previous GitHub Actions workflow is kept disabled (`.github/workflows/deploy.yml.disabled`) as disaster-recovery fallback.
 
 ```bash
 git push origin main    # production (dtpf.es, port 3998)

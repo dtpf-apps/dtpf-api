@@ -19,22 +19,27 @@ pnpm format          # Prettier
 pnpm test            # Run tests (vitest)
 pnpm test:watch      # Run tests in watch mode
 pnpm test:coverage   # Run tests with v8 coverage report
+pnpm test:e2e        # Run e2e suite (vitest.e2e.config.ts, supertest)
 ```
 
 ### Testing
 
-Vitest 4 with globals. **77 tests** across 6 test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy.
+Vitest 4 with globals. **79 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; the GitHub workflow is disabled, kept as disaster-recovery fallback).
 
 ```
 test/
 ├── helpers/mocks.ts                  # Mock factories (req/res/next, valid contact body)
 ├── controllers/
-│   ├── contact.test.ts               # 28 tests — all 5 anti-spam layers + validation + happy path
+│   ├── clientErrors.test.ts          # 20 tests — client error reporting + rate limit
+│   ├── contact.test.ts               # 32 tests — all 5 anti-spam layers + validation + happy path
 │   └── utils.test.ts                 # 1 test — health check
-├── middlewares/error.test.ts         # 3 tests — error middleware
-└── services/
-    ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
-    └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
+├── middlewares/
+│   ├── error.test.ts                 # 5 tests — error middleware
+│   └── securityHeaders.test.ts       # 2 tests — CSP + security headers
+├── services/
+│   ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
+│   └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
+└── e2e/api.e2e.test.ts               # Full HTTP cycle via supertest (pnpm test:e2e, own config)
 ```
 
 Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `vi.useFakeTimers()` for retry delays, unique IPs per test to avoid rate limit state leakage.
@@ -44,7 +49,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 ### Entry Flow
 
 `src/index.ts` connects to MongoDB, verifies email transporter, and starts Express server.
-`src/app.ts` configures middleware (JSON parser, CORS, pino-http) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and SPA catch-all routing.
+`src/app.ts` configures middleware (JSON/urlencoded parsers with 16kb limit, compression, pino-http, CORS, security headers incl. CSP) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and SPA catch-all routing.
 
 ### File Structure
 
@@ -60,7 +65,8 @@ src/
 │   ├── contact.interface.ts
 │   └── index.ts
 ├── middlewares/
-│   └── error.middleware.ts
+│   ├── error.middleware.ts
+│   └── securityHeaders.middleware.ts  # CSP + nosniff/frame/referrer/permissions headers
 ├── models/
 │   └── contact.ts               # Contact schema (email, name, message, date)
 ├── routers/
