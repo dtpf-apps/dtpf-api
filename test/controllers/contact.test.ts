@@ -41,7 +41,6 @@ vi.mock('../../src/config/config', () => ({
     },
     app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
     db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
-    dauth: { TSK: '', DOMAIN_NAME: '', DOMAIN_URL: '' },
   },
 }));
 

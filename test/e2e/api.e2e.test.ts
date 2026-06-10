@@ -54,14 +54,12 @@ vi.mock('../../src/services/logger', () => {
 vi.mock('../../src/config/config', () => ({
   default: {
     email: {
-      EMAIL: 'sender@gmail.com',
-      EMAIL_PASSWORD: 'pass',
-      NOTIFICATION_TO: 'to@gmail.com',
-      SMTP_USER: 'test',
-      EMAIL_FROM: 'sender@gmail.com',
       SMTP_HOST: 'localhost',
       SMTP_PORT: 587,
+      SMTP_USER: 'test',
       SMTP_PASS: 'pass',
+      EMAIL_FROM: 'sender@example.com',
+      NOTIFICATION_TO: 'to@example.com',
     },
     app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
     db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
