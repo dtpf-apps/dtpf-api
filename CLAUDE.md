@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 5, TypeScript 6.0, and MongoDB (Mongoose 9.6). Package manager: **pnpm**.
+Backend for the dtpf.es personal portfolio website. Built with Node.js 22, Express 5, TypeScript 6.0, and MongoDB (Mongoose 9.7). Package manager: **pnpm**.
 
 Serves as the **contact form API** — receives messages, stores in MongoDB, sends email notification via Stalwart Mail Server.
 
