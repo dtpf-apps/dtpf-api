@@ -1,12 +1,12 @@
 {
   "name": "dtpf-api",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Backend para portafolio personal",
   "main": "dist/index.js",
   "author": "David Thomas Pizarro Frick",
   "license": "MIT",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "dependencies": {
     "compression": "^1.8.1",
@@ -18,10 +18,10 @@
     "pino-http": "^11.0.0"
   },
   "devDependencies": {
-    "@tsconfig/node22": "^22.0.5",
+    "@tsconfig/node24": "^24.0.4",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.6",
-    "@types/node": "~22.19.18",
+    "@types/node": "~24.13.2",
     "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.8",
