@@ -1,6 +1,7 @@
 vi.mock('../../src/services/logger', () => ({
   default: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -72,5 +73,48 @@ describe('errorMiddleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res._body.message).toBe('Datos de entrada invalidos.');
+  });
+
+  // A scanner probing malformed percent-encodings (`GET /%c0`) makes Express
+  // throw a URIError tagged status 400 — client input, not a server fault: it
+  // must log at warn (below the level>=50 alert threshold) and respond 400.
+  it('honours a malformed-URL URIError status (400) and logs at warn, not error', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const error = Object.assign(new URIError("Failed to decode param '%c0'"), { status: 400 });
+
+    errorMiddleware(error, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res._body.status).toBe(400);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('honours a missing-file ENOENT status (404) and logs at warn, not error', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const error = Object.assign(new Error('ENOENT'), { statusCode: 404, code: 'ENOENT' });
+
+    errorMiddleware(error, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('returns the real 5xx status (503) and logs at error', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const error = Object.assign(new Error('upstream down'), { status: 503 });
+
+    errorMiddleware(error, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });

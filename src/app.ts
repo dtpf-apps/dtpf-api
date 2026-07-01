@@ -62,7 +62,11 @@ if (process.env.NODE_ENV !== 'development') {
   app.use('/service-worker.js', (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('CDN-Cache-Control', 'no-store');
-    res.sendFile(path.resolve('client/service-worker.js'));
+    // Return a clean 404 (which tells a stale browser to unregister) if the
+    // build ships no service worker, instead of throwing ENOENT into a 500.
+    res.sendFile(path.resolve('client/service-worker.js'), (err) => {
+      if (err && !res.headersSent) res.status(404).end();
+    });
   });
   app.use(
     '/',
