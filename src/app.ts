@@ -55,8 +55,6 @@ app.use(`/api/${config.app.API_VERSION}`, clientErrorsRoutes);
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
 app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
 
-app.use(errorMiddleware);
-
 if (process.env.NODE_ENV !== 'development') {
   app.use('/assets', express.static('client/assets', { maxAge: '1y', immutable: true, redirect: false }));
   app.use('/service-worker.js', (_req: Request, res: Response) => {
@@ -81,5 +79,11 @@ if (process.env.NODE_ENV !== 'development') {
     res.sendFile(path.resolve('client/index.html'));
   });
 }
+
+// Error handler LAST, so it also catches errors thrown by the production static
+// and SPA-catch-all handlers above — e.g. a scanner's malformed-URL URIError
+// from the `{*splat}` param decode, which otherwise falls through to Express's
+// default finalhandler (a 500, or a stack-trace leak when NODE_ENV != production).
+app.use(errorMiddleware);
 
 export default app;

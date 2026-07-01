@@ -299,3 +299,21 @@ describe('E2E: 404 handling', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('E2E: error handler ordering (scanner-style malformed URL)', () => {
+  // A scanner probing `GET /%c0` makes serve-static / the `{*splat}` param
+  // decoder throw a URIError (status 400). The error handler must be registered
+  // LAST (after the production static/catch-all block) so this reaches it and
+  // returns clean JSON — not Express's default finalhandler, which leaks a
+  // stack trace when NODE_ENV != production. Guards against re-introducing the
+  // handler-before-static ordering bug.
+  it('returns clean JSON 400 for a malformed-URL URIError, never the default HTML stack trace', async () => {
+    const res = await request(app).get('/%c0');
+
+    expect(res.status).toBe(400);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.body).toMatchObject({ status: 400 });
+    expect(JSON.stringify(res.body)).not.toContain('URIError');
+    expect(JSON.stringify(res.body)).not.toContain('node_modules');
+  });
+});
