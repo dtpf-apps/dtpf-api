@@ -24,7 +24,7 @@ pnpm test:e2e        # Run e2e suite (vitest.e2e.config.ts, supertest)
 
 ### Testing
 
-Vitest 4 with globals. **79 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; the GitHub workflow is disabled, kept as disaster-recovery fallback).
+Vitest 4 with globals. **82 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; the GitHub workflow is disabled, kept as disaster-recovery fallback).
 
 ```
 test/
@@ -34,12 +34,12 @@ test/
 │   ├── contact.test.ts               # 32 tests — all 5 anti-spam layers + validation + happy path
 │   └── utils.test.ts                 # 1 test — health check
 ├── middlewares/
-│   ├── error.test.ts                 # 5 tests — error middleware
+│   ├── error.test.ts                 # 8 tests — error middleware
 │   └── securityHeaders.test.ts       # 2 tests — CSP + security headers
 ├── services/
 │   ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
 │   └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
-└── e2e/api.e2e.test.ts               # Full HTTP cycle via supertest (pnpm test:e2e, own config)
+└── e2e/api.e2e.test.ts               # 16 tests — full HTTP cycle via supertest (pnpm test:e2e, own config)
 ```
 
 Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `vi.useFakeTimers()` for retry delays, unique IPs per test to avoid rate limit state leakage.
