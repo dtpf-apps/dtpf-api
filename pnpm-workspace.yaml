@@ -1,11 +1,13 @@
 allowBuilds:
   esbuild: false
-minimumReleaseAgeExclude:
-  - qs@6.15.2
-  - brace-expansion@5.0.6
 overrides:
-  brace-expansion@>=5.0.0 <5.0.6: ^5.0.6
+  # Security floors. Each entry pins a transitive chain that would otherwise
+  # re-resolve back to a vulnerable version: the parent's own range still
+  # admits one, so the safe version we get today is luck, not a decision.
+  brace-expansion@>=5.0.0 <5.0.9: ^5.0.9 # nodemon > minimatch (GHSA-rgw5-rvv9-x895)
   qs@>=6.11.1 <=6.15.1: ^6.15.2
+  postcss@<8.5.23: ^8.5.23 # vitest > vite (asks ^8.5.6) — GHSA-fxqj-rqcc-2cmp
+  body-parser@<2.3.0: ^2.3.0 # express (asks ^2.2.1) — GHSA-v422-hmwv-36x6
   vite: ^7.3.2
   path-to-regexp: '>=8.4.0'
   form-data@>=4.0.0 <4.0.6: ^4.0.6
