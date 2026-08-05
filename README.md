@@ -4,20 +4,20 @@ Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handl
 
 ## Tech Stack
 
-| Technology | Version | Purpose |
-|---|---|---|
-| Node.js | 22 | Runtime |
-| Express | 5 | HTTP framework |
-| TypeScript | 6.0 | Type safety |
-| MongoDB | 8 | Database |
-| Mongoose | 9 | ODM |
-| Nodemailer | 8 | Email (Stalwart SMTP) |
-| Pino | 10 | Structured JSON logging |
-| Vitest | 4 | Testing |
+| Technology | Version | Purpose                 |
+| ---------- | ------- | ----------------------- |
+| Node.js    | 24      | Runtime                 |
+| Express    | 5       | HTTP framework          |
+| TypeScript | 7       | Type safety             |
+| MongoDB    | 8       | Database                |
+| Mongoose   | 9       | ODM                     |
+| Nodemailer | 9       | Email (Stalwart SMTP)   |
+| Pino       | 10      | Structured JSON logging |
+| Vitest     | 4       | Testing                 |
 
 ## Prerequisites
 
-- Node.js >= 22
+- Node.js >= 24
 - pnpm
 - Docker (for local MongoDB)
 
@@ -32,34 +32,34 @@ cp .env.development.example .env.development
 
 ## Scripts
 
-| Script | Description |
-|---|---|
-| `pnpm db` | Start local MongoDB Docker container (port 27019) |
-| `pnpm dev` | Start dev server with `tsc --watch` + nodemon (port 3998) |
-| `pnpm build` | Compile TypeScript to `dist/` |
-| `pnpm start` | Start production server (`NODE_ENV=production`) |
-| `pnpm format` | Format source files with Prettier |
-| `pnpm test` | Run tests with Vitest |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with v8 coverage report |
-| `pnpm test:e2e` | Run e2e suite (supertest, separate Vitest config) |
+| Script               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| `pnpm db`            | Start local MongoDB Docker container (port 27019)         |
+| `pnpm dev`           | Start dev server with `tsc --watch` + nodemon (port 3998) |
+| `pnpm build`         | Compile TypeScript to `dist/`                             |
+| `pnpm start`         | Start production server (`NODE_ENV=production`)           |
+| `pnpm format`        | Format source files with Prettier                         |
+| `pnpm test`          | Run tests with Vitest                                     |
+| `pnpm test:watch`    | Run tests in watch mode                                   |
+| `pnpm test:coverage` | Run tests with v8 coverage report                         |
+| `pnpm test:e2e`      | Run e2e suite (supertest, separate Vitest config)         |
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `API_VERSION` | API version prefix | `v1` |
-| `IP_SERVER` | Server bind address | `127.0.0.1` |
-| `IP_MONGO_DB` | MongoDB host | `127.0.0.1` |
-| `PORT_MONGO_DB` | MongoDB port | `27019` |
-| `DB_NAME` | Database name | `dtpf` |
-| `PORT_SERVER` | Express port | `3998` |
-| `SMTP_HOST` | Stalwart Mail Server host | `10.5.0.46` |
-| `SMTP_PORT` | SMTP submission port | `587` |
-| `SMTP_USER` | SMTP auth username (without domain) | -- |
-| `SMTP_PASS` | SMTP auth password | -- |
-| `EMAIL_FROM` | Sender email address | `contacto@dtpf.es` |
-| `NOTIFICATION_TO` | Recipient for contact notifications | `dtpf@dtpf.es` |
+| Variable          | Description                         | Default            |
+| ----------------- | ----------------------------------- | ------------------ |
+| `API_VERSION`     | API version prefix                  | `v1`               |
+| `IP_SERVER`       | Server bind address                 | `127.0.0.1`        |
+| `IP_MONGO_DB`     | MongoDB host                        | `127.0.0.1`        |
+| `PORT_MONGO_DB`   | MongoDB port                        | `27019`            |
+| `DB_NAME`         | Database name                       | `dtpf`             |
+| `PORT_SERVER`     | Express port                        | `3998`             |
+| `SMTP_HOST`       | Stalwart Mail Server host           | `10.5.0.46`        |
+| `SMTP_PORT`       | SMTP submission port                | `587`              |
+| `SMTP_USER`       | SMTP auth username (without domain) | --                 |
+| `SMTP_PASS`       | SMTP auth password                  | --                 |
+| `EMAIL_FROM`      | Sender email address                | `contacto@dtpf.es` |
+| `NOTIFICATION_TO` | Recipient for contact notifications | `dtpf@dtpf.es`     |
 
 ## Project Structure
 
@@ -100,11 +100,11 @@ In production, the backend serves the pre-built frontend from a `client/` direct
 
 All endpoints prefixed with `/api/v1`.
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/api/v1/contact-me` | Public | Submit contact form |
+| Method | Path                    | Auth   | Description                           |
+| ------ | ----------------------- | ------ | ------------------------------------- |
+| `POST` | `/api/v1/contact-me`    | Public | Submit contact form                   |
 | `POST` | `/api/v1/client-errors` | Public | Report frontend errors (rate limited) |
-| `GET` | `/api/v1/connection` | Public | Health check |
+| `GET`  | `/api/v1/connection`    | Public | Health check                          |
 
 ## Contact Form Anti-Spam
 
@@ -128,7 +128,7 @@ The email template matches the dtpf.es visual identity (dark background, Ocean T
 
 ## Testing
 
-79 tests across 7 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, supertest with mocked MongoDB/email) runs via its own Vitest config.
+82 tests across 7 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, 16 tests, supertest with mocked MongoDB/email) runs via its own Vitest config.
 
 ```bash
 pnpm test
