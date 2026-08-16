@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-Backend for the dtpf.es personal portfolio website. Built with Node.js 24, Express 5, TypeScript 7, and MongoDB (Mongoose 9.7). Package manager: **pnpm**.
+Backend for the dtpf.es personal portfolio website. Built with Node.js 24, Express 5, TypeScript 7, and MongoDB (Mongoose 9.9). Package manager: **pnpm**.
 
 Serves as the **contact form API** — receives messages, stores in MongoDB, sends email notification via Stalwart Mail Server.
 
@@ -25,6 +25,8 @@ pnpm test:e2e        # Run e2e suite (vitest.e2e.config.ts, supertest)
 ### Testing
 
 Vitest 4 with globals. **82 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; the GitHub workflow is disabled, kept as disaster-recovery fallback).
+
+`vite` is a direct devDependency even though this backend compiles with `tsc` and never bundles. It arrives as vitest's own dependency across a three-major range, and an override cannot move a version the lockfile already pins — so declaring it directly is what actually decides which major the test toolchain runs on. It is dev-only and the deploy prunes it.
 
 ```
 test/

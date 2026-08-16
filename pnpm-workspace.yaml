@@ -1,3 +1,9 @@
+# Supply-chain quarantine: refuse any release younger than 24 h. pnpm ships this
+# check but leaves it OFF unless the key is present, and CI pins pnpm 10 — so
+# without this line nothing is enforced, here or on the runner. Verified against
+# a positive control: with the key armed pnpm refuses a two-day-old release with
+# ERR_PNPM_NO_MATURE_MATCHING_VERSION, and without it the same install succeeds.
+minimumReleaseAge: 1440
 allowBuilds:
   esbuild: false
 overrides:
@@ -7,7 +13,12 @@ overrides:
   brace-expansion@>=5.0.0 <5.0.9: ^5.0.9 # nodemon > minimatch (GHSA-rgw5-rvv9-x895)
   qs@>=6.11.1 <=6.15.1: ^6.15.2
   postcss@<8.5.23: ^8.5.23 # vitest > vite (asks ^8.5.6) — GHSA-fxqj-rqcc-2cmp
+  nanoid@<3.3.18: ^3.3.18 # vite > postcss (asks ^3.3.16) — GHSA-2v37-7h3g-55p8
   body-parser@<2.3.0: ^2.3.0 # express (asks ^2.2.1) — GHSA-v422-hmwv-36x6
-  vite: ^7.3.2
   path-to-regexp: '>=8.4.0'
   form-data@>=4.0.0 <4.0.6: ^4.0.6
+# vite is not listed here on purpose. It arrives as vitest's own dependency
+# (^6 || ^7 || ^8), and an override cannot move an already-locked version — a
+# plain install left it behind while reporting an unmet peer. Declaring it a
+# direct devDependency is what actually decides the version, so it lives in
+# package.json alongside the rest of the test toolchain.
