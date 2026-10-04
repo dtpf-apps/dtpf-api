@@ -19,7 +19,7 @@ pnpm format          # Prettier
 pnpm test            # Run tests (vitest)
 pnpm test:watch      # Run tests in watch mode
 pnpm test:coverage   # Run tests with v8 coverage report
-pnpm test:e2e        # Run e2e suite (vitest.e2e.config.ts, supertest)
+pnpm test:e2e        # E2E suite (vitest.e2e.config.mts, supertest)
 ```
 
 ### Testing
