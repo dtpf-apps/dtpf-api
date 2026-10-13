@@ -74,6 +74,16 @@ function prerenderedPage(urlPath: string): string | null {
   return existsSync(path.join(clientDir, relative)) ? relative : null;
 }
 
+// A build that pre-renders emits a file for EVERY page (the English home is the
+// cheapest proof), so under such a build a path without one is unknown. The
+// shell still lets the client render its not-found page, but a 404 status keeps
+// a mistyped URL out of the index instead of indexing it as a copy of the home,
+// whose head the shell carries. Checked per request: the client is rsynced
+// without restarting this process, and an older build must keep the plain 200.
+function clientIsPrerendered(): boolean {
+  return existsSync(path.join(clientDir, 'en', 'index.html'));
+}
+
 if (process.env.NODE_ENV !== 'development') {
   app.use(
     '/assets',
@@ -102,7 +112,10 @@ if (process.env.NODE_ENV !== 'development') {
     if (req.path.startsWith('/api/')) {
       return next(Object.assign(new Error(`No route for ${req.path}`), { status: 404 }));
     }
-    res.sendFile(prerenderedPage(req.path) ?? 'index.html', { root: clientDir });
+    const page = prerenderedPage(req.path);
+    res
+      .status(page || !clientIsPrerendered() ? 200 : 404)
+      .sendFile(page ?? 'index.html', { root: clientDir });
   });
 }
 

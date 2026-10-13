@@ -31,11 +31,12 @@ describe('securityHeadersMiddleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('CSP whitelists the portfolio runtime surface: own origin + Google Fonts + Umami', () => {
+  it('CSP whitelists the portfolio runtime surface: own origin + Umami, no font host', () => {
     expect(CONTENT_SECURITY_POLICY).toContain("default-src 'self'");
     expect(CONTENT_SECURITY_POLICY).toContain("script-src 'self' https://analytics.dtpf.es");
-    expect(CONTENT_SECURITY_POLICY).toContain('https://fonts.googleapis.com');
-    expect(CONTENT_SECURITY_POLICY).toContain('https://fonts.gstatic.com');
+    expect(CONTENT_SECURITY_POLICY).toContain("style-src 'self' 'unsafe-inline';");
+    expect(CONTENT_SECURITY_POLICY).toContain("font-src 'self';");
+    expect(CONTENT_SECURITY_POLICY).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
     expect(CONTENT_SECURITY_POLICY).toContain("connect-src 'self' https://analytics.dtpf.es");
     expect(CONTENT_SECURITY_POLICY).toContain("frame-ancestors 'none'");
   });

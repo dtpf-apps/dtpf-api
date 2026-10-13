@@ -41,7 +41,7 @@ test/
 ├── services/
 │   ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
 │   └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
-└── e2e/api.e2e.test.ts               # 20 tests — full HTTP cycle via supertest (pnpm test:e2e, own config)
+└── e2e/api.e2e.test.ts               # 21 tests — full HTTP cycle via supertest (pnpm test:e2e, own config)
 ```
 
 Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `vi.useFakeTimers()` for retry delays, unique IPs per test to avoid rate limit state leakage. The e2e suite points `CLIENT_DIR` (test-only override of the `client/` directory) at a throwaway fixture so the static block and the per-route HTML resolution run over real HTTP.
@@ -51,7 +51,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 ### Entry Flow
 
 `src/index.ts` connects to MongoDB, verifies email transporter, and starts Express server.
-`src/app.ts` configures middleware (JSON/urlencoded parsers with 16kb limit, compression, pino-http, CORS, security headers incl. CSP) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and a catch-all that serves the route's pre-rendered `client/<route>/index.html` (the frontend build emits one per route with that page's title, description, Open Graph and canonical tags) when it exists and the SPA shell otherwise. Unknown `/api/*` paths get a JSON 404, never the shell.
+`src/app.ts` configures middleware (JSON/urlencoded parsers with 16kb limit, compression, pino-http, CORS, security headers incl. CSP) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and a catch-all that serves the route's pre-rendered `client/<route>/index.html` (the frontend build emits one per route with that page's title, description, Open Graph and canonical tags) when it exists, and otherwise the SPA shell with a **404 status** — every real page has a pre-rendered file, so a path without one is unknown; the client still renders its not-found page, and a crawler never indexes a mistyped URL as a copy of the home (the shell is the home's pre-rendered head). Unknown `/api/*` paths get a JSON 404, never the shell.
 
 ### File Structure
 

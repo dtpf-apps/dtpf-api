@@ -348,9 +348,9 @@ describe('E2E: SPA shell and pre-rendered routes', () => {
     fs.rmSync(clientFixture.root, { recursive: true, force: true });
   });
 
-  const html = async (url: string) => {
+  const html = async (url: string, status = 200) => {
     const res = await request(app).get(url);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(status);
     expect(res.headers['content-type']).toMatch(/html/);
     return res.text;
   };
@@ -365,15 +365,27 @@ describe('E2E: SPA shell and pre-rendered routes', () => {
     expect(await html('/en')).toContain('<title>english home</title>');
   });
 
-  it('falls back to the shell for a route the build did not pre-render', async () => {
-    expect(await html('/projects/anything')).toContain('<title>shell</title>');
-    expect(await html('/en/projects')).toContain('<title>shell</title>');
+  it('serves the shell with a 404 for a path the build did not pre-render', async () => {
+    expect(await html('/projects/anything', 404)).toContain('<title>shell</title>');
+    expect(await html('/en/projects', 404)).toContain('<title>shell</title>');
+  });
+
+  it('keeps the 200 shell for a client built without pre-rendered pages', async () => {
+    const fs = await import('node:fs');
+    const nodePath = await import('node:path');
+    const marker = nodePath.join(clientFixture.client, 'en', 'index.html');
+    fs.renameSync(marker, `${marker}.off`);
+    try {
+      expect(await html('/projects/anything')).toContain('<title>shell</title>');
+    } finally {
+      fs.renameSync(`${marker}.off`, marker);
+    }
   });
 
   it('never resolves a pre-rendered page outside the client root', async () => {
     // Node's HTTP client sends the path verbatim, so Express sees the `..` segments.
-    expect(await html('/../outside')).toContain('<title>shell</title>');
-    expect(await html('/about/../../outside')).toContain('<title>shell</title>');
-    expect(await html('/..%2Foutside')).toContain('<title>shell</title>');
+    expect(await html('/../outside', 404)).toContain('<title>shell</title>');
+    expect(await html('/about/../../outside', 404)).toContain('<title>shell</title>');
+    expect(await html('/..%2Foutside', 404)).toContain('<title>shell</title>');
   });
 });
