@@ -19,7 +19,7 @@ vi.mock('../../src/services/logger', () => ({
 vi.mock('../../src/config/config', () => ({
   default: {
     email: {
-      SMTP_HOST: '10.5.0.46',
+      SMTP_HOST: 'mail.example.com',
       SMTP_PORT: 587,
       SMTP_USER: 'contacto',
       SMTP_PASS: 'pass',

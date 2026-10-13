@@ -24,7 +24,7 @@ pnpm test:e2e        # E2E suite (vitest.e2e.config.mts, supertest)
 
 ### Testing
 
-Vitest 5 with globals. **82 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; the GitHub workflow is disabled, kept as disaster-recovery fallback).
+Vitest 5 with globals. **82 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; GitHub only receives a read-only push mirror).
 
 `vite` is a direct devDependency even though this backend compiles with `tsc` and never bundles. It arrives as vitest's own dependency across a three-major range, and an override cannot move a version the lockfile already pins — so declaring it directly is what actually decides which major the test toolchain runs on. It is dev-only and the deploy prunes it.
 
@@ -129,7 +129,7 @@ Email template matches the dtpf.es visual identity (dark bg, Ocean Teal accents,
 | `PORT_MONGO_DB`   | `27019`            | MongoDB port                           |
 | `DB_NAME`         | `dtpf`             | Database name                          |
 | `PORT_SERVER`     | `3998`             | Express port                           |
-| `SMTP_HOST`       | `10.5.0.46`        | Stalwart Mail Server host              |
+| `SMTP_HOST`       | `mail.example.com` | Stalwart Mail Server host              |
 | `SMTP_PORT`       | `587`              | SMTP submission port                   |
 | `SMTP_USER`       | `contacto`         | SMTP auth username (without domain)    |
 | `SMTP_PASS`       | `<password>`       | SMTP auth password                     |

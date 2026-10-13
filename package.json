@@ -1,10 +1,15 @@
 {
   "name": "dtpf-api",
-  "version": "0.1.20",
-  "description": "Backend para portafolio personal",
+  "version": "0.1.21",
+  "description": "Contact-form API behind dtpf.es, the personal portfolio of David T. Pizarro Frick",
   "main": "dist/index.js",
-  "author": "David Thomas Pizarro Frick",
+  "author": "David T. Pizarro Frick",
   "license": "MIT",
+  "homepage": "https://dtpf.es",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dtpf-apps/dtpf-api.git"
+  },
   "engines": {
     "node": ">=24"
   },

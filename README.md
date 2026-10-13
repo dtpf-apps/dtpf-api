@@ -11,9 +11,9 @@ Backend API for the [dtpf.es](https://dtpf.es) personal portfolio website. Handl
 | TypeScript | 7       | Type safety             |
 | MongoDB    | 8       | Database                |
 | Mongoose   | 9       | ODM                     |
-| Nodemailer | 9       | Email (Stalwart SMTP)   |
+| Nodemailer | 10      | Email (Stalwart SMTP)   |
 | Pino       | 10      | Structured JSON logging |
-| Vitest     | 4       | Testing                 |
+| Vitest     | 5       | Testing                 |
 
 ## Prerequisites
 
@@ -32,17 +32,17 @@ cp .env.development.example .env.development
 
 ## Scripts
 
-| Script               | Description                                               |
-| -------------------- | --------------------------------------------------------- |
-| `pnpm db`            | Start local MongoDB Docker container (port 27019)         |
-| `pnpm dev`           | Start dev server with `tsc --watch` + nodemon (port 3998) |
-| `pnpm build`         | Compile TypeScript to `dist/`                             |
-| `pnpm start`         | Start production server (`NODE_ENV=production`)           |
-| `pnpm format`        | Format source files with Prettier                         |
-| `pnpm test`          | Run tests with Vitest                                     |
-| `pnpm test:watch`    | Run tests in watch mode                                   |
-| `pnpm test:coverage` | Run tests with v8 coverage report                         |
-| `pnpm test:e2e`      | Run e2e suite (supertest, separate Vitest config)         |
+| Script               | Description                                            |
+| -------------------- | ------------------------------------------------------ |
+| `pnpm db`            | Start local MongoDB Docker container (port 27019)      |
+| `pnpm dev`           | Dev server: `tsc --watch` + `node --watch` (port 3998) |
+| `pnpm build`         | Compile TypeScript to `dist/`                          |
+| `pnpm start`         | Start production server (`NODE_ENV=production`)        |
+| `pnpm format`        | Format source files with Prettier                      |
+| `pnpm test`          | Run tests with Vitest                                  |
+| `pnpm test:watch`    | Run tests in watch mode                                |
+| `pnpm test:coverage` | Run tests with v8 coverage report                      |
+| `pnpm test:e2e`      | Run e2e suite (supertest, separate Vitest config)      |
 
 ## Environment Variables
 
@@ -54,7 +54,7 @@ cp .env.development.example .env.development
 | `PORT_MONGO_DB`   | MongoDB port                        | `27019`            |
 | `DB_NAME`         | Database name                       | `dtpf`             |
 | `PORT_SERVER`     | Express port                        | `3998`             |
-| `SMTP_HOST`       | Stalwart Mail Server host           | `10.5.0.46`        |
+| `SMTP_HOST`       | Stalwart Mail Server host           | `localhost`        |
 | `SMTP_PORT`       | SMTP submission port                | `587`              |
 | `SMTP_USER`       | SMTP auth username (without domain) | --                 |
 | `SMTP_PASS`       | SMTP auth password                  | --                 |
@@ -128,7 +128,7 @@ The email template matches the dtpf.es visual identity (dark background, Ocean T
 
 ## Testing
 
-82 tests across 7 files using Vitest 4. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, 16 tests, supertest with mocked MongoDB/email) runs via its own Vitest config.
+82 tests across 7 files using Vitest 5. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, 16 tests, supertest with mocked MongoDB/email) runs via its own Vitest config.
 
 ```bash
 pnpm test
@@ -138,11 +138,11 @@ pnpm test:e2e
 
 ## Deploy
 
-Gitea Actions CI/CD (`.gitea/workflows/deploy.yml`): push runs tests + build on a self-hosted runner, rsyncs `dist/` and production `node_modules` to the app server, and reloads PM2. The previous GitHub Actions workflow is kept disabled (`.github/workflows/deploy.yml.disabled`) as disaster-recovery fallback.
+Gitea Actions CI/CD (`.gitea/workflows/deploy.yml`): a push runs tests + build on a self-hosted runner, rsyncs `dist/` and production `node_modules` to the app server, and reloads PM2. The deploy target (`user@host`) and the failure-notification room are repository Actions variables (`APP_SERVER`, `CI_MATRIX_ROOM`), never source. GitHub receives a read-only push mirror of this repository.
 
 ```bash
-git push origin main    # production (dtpf.es, port 3998)
-git push origin dev     # staging (dev.dtpf.es, port 5998)
+git push gitea main    # production (dtpf.es, port 3998)
+git push gitea dev     # staging (dev.dtpf.es, port 5998)
 ```
 
 ## Code Style
@@ -151,4 +151,4 @@ Prettier: 110 char width, single quotes, semicolons, trailing commas (es5), 2-sp
 
 ## License
 
-MIT
+[MIT](LICENSE)
