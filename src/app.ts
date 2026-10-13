@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { existsSync } from 'fs';
 import path from 'path';
 import compression from 'compression';
 import pinoHttp from 'pino-http';
@@ -55,28 +56,53 @@ app.use(`/api/${config.app.API_VERSION}`, clientErrorsRoutes);
 app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
 app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
 
+// The built SPA is deployed beside the server as `client/`; tests point this at a fixture.
+const clientDir = path.resolve(process.env.CLIENT_DIR ?? 'client');
+
+// The frontend build writes one `index.html` per route under `client/<route>/`,
+// whose <head> carries that page's own title, description, Open Graph and
+// canonical tags. Link previews and crawlers fetch the route URL as-is, so they
+// must receive that file rather than the shell. `express.static` only finds it
+// for URLs ending in `/` (with `redirect: false` it skips a bare directory), so
+// the catch-all resolves it for the rest. Returns the file relative to `client/`
+// (served with `root`, so `send` confines it there too) or null when the build
+// produced none; normalising first collapses `..` segments so a crafted URL can
+// only ever name a file under `client/`.
+function prerenderedPage(urlPath: string): string | null {
+  const relative = path.posix.join('.', path.posix.normalize(urlPath), 'index.html');
+  if (relative.startsWith('..')) return null;
+  return existsSync(path.join(clientDir, relative)) ? relative : null;
+}
+
 if (process.env.NODE_ENV !== 'development') {
-  app.use('/assets', express.static('client/assets', { maxAge: '1y', immutable: true, redirect: false }));
+  app.use(
+    '/assets',
+    express.static(path.join(clientDir, 'assets'), { maxAge: '1y', immutable: true, redirect: false })
+  );
   app.use('/service-worker.js', (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('CDN-Cache-Control', 'no-store');
     // Return a clean 404 (which tells a stale browser to unregister) if the
     // build ships no service worker, instead of throwing ENOENT into a 500.
-    res.sendFile(path.resolve('client/service-worker.js'), (err) => {
+    res.sendFile('service-worker.js', { root: clientDir }, (err) => {
       if (err && !res.headersSent) res.status(404).end();
     });
   });
   app.use(
     '/',
-    express.static('client', {
+    express.static(clientDir, {
       redirect: false,
       setHeaders: (res) => {
         res.setHeader('CDN-Cache-Control', 'no-store');
       },
     })
   );
-  app.get('/{*splat}', (_req: Request, res: Response) => {
-    res.sendFile(path.resolve('client/index.html'));
+  app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
+    // An unknown API path is an API error, never the SPA shell with a 200.
+    if (req.path.startsWith('/api/')) {
+      return next(Object.assign(new Error(`No route for ${req.path}`), { status: 404 }));
+    }
+    res.sendFile(prerenderedPage(req.path) ?? 'index.html', { root: clientDir });
   });
 }
 

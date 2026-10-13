@@ -66,6 +66,29 @@ vi.mock('../../src/config/config', () => ({
   },
 }));
 
+// The static block serves the built SPA from `client/`, which this repo never
+// contains. A throwaway fixture stands in for it so the per-route HTML resolution
+// is exercised over real HTTP: a shell, two pre-rendered routes, and a file that
+// sits OUTSIDE the client root and must never be reachable.
+const { clientFixture } = await vi.hoisted(async () => {
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const nodePath = await import('node:path');
+  const root = fs.mkdtempSync(nodePath.join(os.tmpdir(), 'dtpf-api-client-'));
+  const client = nodePath.join(root, 'client');
+  const write = (rel: string, title: string) => {
+    const file = nodePath.join(root, rel);
+    fs.mkdirSync(nodePath.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `<!doctype html><html><head><title>${title}</title></head><body></body></html>`);
+  };
+  write('client/index.html', 'shell');
+  write('client/about/index.html', 'about page');
+  write('client/en/index.html', 'english home');
+  write('outside/index.html', 'outside the client root');
+  process.env.CLIENT_DIR = client;
+  return { clientFixture: { root, client } };
+});
+
 import request from 'supertest';
 import app from '../../src/app';
 
@@ -293,10 +316,11 @@ describe('E2E: CORS headers', () => {
 });
 
 describe('E2E: 404 handling', () => {
-  it('unknown API route returns no matching route (Express 5 default)', async () => {
+  it('unknown API route returns a JSON 404, never the SPA shell', async () => {
     const res = await request(app).get('/api/v1/nonexistent');
-    // Express 5 returns 404 for unmatched routes
     expect(res.status).toBe(404);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.body).toMatchObject({ status: 404 });
   });
 });
 
@@ -315,5 +339,41 @@ describe('E2E: error handler ordering (scanner-style malformed URL)', () => {
     expect(res.body).toMatchObject({ status: 400 });
     expect(JSON.stringify(res.body)).not.toContain('URIError');
     expect(JSON.stringify(res.body)).not.toContain('node_modules');
+  });
+});
+
+describe('E2E: SPA shell and pre-rendered routes', () => {
+  afterAll(async () => {
+    const fs = await import('node:fs');
+    fs.rmSync(clientFixture.root, { recursive: true, force: true });
+  });
+
+  const html = async (url: string) => {
+    const res = await request(app).get(url);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/html/);
+    return res.text;
+  };
+
+  it('serves the shell at the root', async () => {
+    expect(await html('/')).toContain('<title>shell</title>');
+  });
+
+  it('serves a route its own pre-rendered HTML, with and without the trailing slash', async () => {
+    expect(await html('/about')).toContain('<title>about page</title>');
+    expect(await html('/about/')).toContain('<title>about page</title>');
+    expect(await html('/en')).toContain('<title>english home</title>');
+  });
+
+  it('falls back to the shell for a route the build did not pre-render', async () => {
+    expect(await html('/projects/anything')).toContain('<title>shell</title>');
+    expect(await html('/en/projects')).toContain('<title>shell</title>');
+  });
+
+  it('never resolves a pre-rendered page outside the client root', async () => {
+    // Node's HTTP client sends the path verbatim, so Express sees the `..` segments.
+    expect(await html('/../outside')).toContain('<title>shell</title>');
+    expect(await html('/about/../../outside')).toContain('<title>shell</title>');
+    expect(await html('/..%2Foutside')).toContain('<title>shell</title>');
   });
 });
