@@ -1,9 +1,12 @@
+import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import {
   CONTENT_SECURITY_POLICY,
   securityHeadersMiddleware,
 } from '../../src/middlewares/securityHeaders.middleware';
-import { createMockRequest, createMockNext } from '../helpers/mocks';
+
+const createMockRequest = () => ({}) as Request;
+const createMockNext = () => vi.fn();
 
 function createResponseWithSetHeader() {
   const headers: Record<string, string> = {};

@@ -12,18 +12,24 @@ import utilsRoutes from './routers/utils';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { securityHeadersMiddleware } from './middlewares/securityHeaders.middleware';
 import { canonicalHostMiddleware } from './middlewares/canonicalHost.middleware';
+import { sendError } from './utils/apiError';
 
 const app = express();
+const apiPrefix = `/api/${config.app.apiVersion}`;
 
 app.disable('x-powered-by');
-app.use(express.urlencoded({ extended: false, limit: '16kb' }));
+// Visitor → Cloudflare → reverse proxy → this process. The proxy resolves the
+// Cloudflare hop itself (it trusts CF-Connecting-IP from Cloudflare's ranges only)
+// and appends that address to X-Forwarded-For, so it is the one hop to trust:
+// `req.ip` is the last entry it wrote. Everything to its left came from the caller.
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '16kb' }));
 app.use(compression());
 app.use(
   pinoHttp({
     logger,
     autoLogging: {
-      ignore: (req) => (req as express.Request).path === '/api/v1/connection',
+      ignore: (req) => (req as express.Request).path === `${apiPrefix}/connection`,
     },
     serializers: {
       req(req) {
@@ -33,32 +39,17 @@ app.use(
   })
 );
 
-// Before CORS and the security headers: a www request gets its 301 and nothing else.
+// Before the security headers: a www request gets its 301 and nothing else.
 app.use(canonicalHostMiddleware);
 
-// CORS
-const allowedOrigins = ['http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
-
-app.use((_req: Request, res: Response, next: NextFunction) => {
-  const origin = _req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-  res.header('Access-Control-Allow-Headers', 'Authorization, Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  if (_req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
+// No CORS on purpose. Every deployed environment serves the client from this same
+// origin, and local development reaches the API through the Vite dev-server proxy,
+// so no browser ever has a cross-origin reason to call it.
 app.use(securityHeadersMiddleware);
 
-// Routes
-app.use(`/api/${config.app.API_VERSION}`, clientErrorsRoutes);
-app.use(`/api/${config.app.API_VERSION}`, contactRoutes);
-app.use(`/api/${config.app.API_VERSION}`, utilsRoutes);
+app.use(apiPrefix, clientErrorsRoutes);
+app.use(apiPrefix, contactRoutes);
+app.use(apiPrefix, utilsRoutes);
 
 // The built SPA is deployed beside the server as `client/`; tests point this at a fixture.
 const clientDir = path.resolve(process.env.CLIENT_DIR ?? 'client');
@@ -100,7 +91,8 @@ function htmlResponseHeaders(res: Response): void {
   res.setHeader('CDN-Cache-Control', 'no-store');
 }
 
-if (process.env.NODE_ENV !== 'development') {
+// In development the client runs on the Vite dev server; everywhere else it is served from here.
+if (config.env !== 'development') {
   app.use(
     '/assets',
     express.static(path.join(clientDir, 'assets'), { maxAge: '1y', immutable: true, redirect: false })
@@ -126,9 +118,7 @@ if (process.env.NODE_ENV !== 'development') {
   );
   app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
     // An unknown API path is an API error, never the SPA shell with a 200.
-    if (req.path.startsWith('/api/')) {
-      return next(Object.assign(new Error(`No route for ${req.path}`), { status: 404 }));
-    }
+    if (req.path.startsWith('/api/')) return next();
     const page = prerenderedPage(req.path);
     htmlResponseHeaders(res);
     res
@@ -136,6 +126,9 @@ if (process.env.NODE_ENV !== 'development') {
       .sendFile(page ?? 'index.html', { root: clientDir });
   });
 }
+
+// Anything no route claimed: in development that includes every non-API path.
+app.use((_req: Request, res: Response) => sendError(res, 404, 'not_found'));
 
 // Error handler LAST, so it also catches errors thrown by the production static
 // and SPA-catch-all handlers above — e.g. a scanner's malformed-URL URIError

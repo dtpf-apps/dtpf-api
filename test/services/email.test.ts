@@ -1,14 +1,15 @@
-const { mockSendMail, mockVerify } = vi.hoisted(() => ({
+const { mockSendMail, mockVerify, mockCreateTransport } = vi.hoisted(() => ({
   mockSendMail: vi.fn(),
   mockVerify: vi.fn(),
+  mockCreateTransport: vi.fn(),
 }));
 
 vi.mock('nodemailer', () => ({
   default: {
-    createTransport: () => ({
+    createTransport: mockCreateTransport.mockImplementation(() => ({
       sendMail: mockSendMail,
       verify: mockVerify,
-    }),
+    })),
   },
 }));
 
@@ -16,23 +17,21 @@ vi.mock('../../src/services/logger', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-vi.mock('../../src/config/config', () => ({
-  default: {
-    email: {
-      SMTP_HOST: 'mail.example.com',
-      SMTP_PORT: 587,
-      SMTP_USER: 'contacto',
-      SMTP_PASS: 'pass',
-      EMAIL_FROM: 'contacto@dtpf.es',
-      NOTIFICATION_TO: 'dtpf@dtpf.es',
-    },
-    app: { URL: 'http://localhost:3998/api/v1', PORT: 3998, API_VERSION: 'v1' },
-    db: { MONGO_URL: 'mongodb://localhost:27019/test', PORT_MONGO_DB: 27019 },
-  },
-}));
-
 import { sendEmail, verifyEmailConnection } from '../../src/services/email';
 import logger from '../../src/services/logger';
+
+describe('transporter', () => {
+  // Read before any clearAllMocks: the transport is built once, at import.
+  const options = mockCreateTransport.mock.calls[0]?.[0];
+
+  it('refuses to send credentials unless the session upgrades to TLS', () => {
+    expect(options).toMatchObject({ port: 587, secure: false, requireTLS: true });
+  });
+
+  it('verifies the certificate against the configured server name and never turns verification off', () => {
+    expect(options.tls).toEqual({ servername: 'localhost' });
+  });
+});
 
 describe('sendEmail', () => {
   beforeEach(() => {

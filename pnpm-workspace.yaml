@@ -16,6 +16,9 @@ engineStrict: true
 
 allowBuilds:
   esbuild: false
+  # The postinstall would download a mongod binary on every install, deploys
+  # included. The e2e suite fetches it lazily on first use and caches it instead.
+  mongodb-memory-server: false
 overrides:
   # Security floors. Each entry pins a transitive chain that would otherwise
   # re-resolve back to a vulnerable version: the parent's own range still

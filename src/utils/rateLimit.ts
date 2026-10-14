@@ -1,61 +1,50 @@
-import { Request } from 'express';
-
-interface RateLimitStore {
-  ipRequests: Map<string, number[]>;
-  maxRequests: number;
-  windowMs: number;
-  maxIps: number;
+export interface RateLimiter {
+  /** Request timestamps per key, oldest first. Map order is least recently seen key first. */
+  readonly hits: Map<string, number[]>;
+  readonly maxRequests: number;
+  readonly windowMs: number;
+  readonly maxKeys: number;
 }
 
-export function getClientIp(req: Request): string {
-  return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+
+/** A sliding-window limiter held in memory: the API runs as a single process per environment. */
+export function createRateLimiter(maxRequests: number, windowMs: number, maxKeys = 10_000): RateLimiter {
+  const limiter: RateLimiter = { hits: new Map(), maxRequests, windowMs, maxKeys };
+  // Drops keys that never come back. Unref'd so it never keeps a process or a test run alive.
+  setInterval(() => sweepExpired(limiter), SWEEP_INTERVAL_MS).unref();
+  return limiter;
 }
 
-export function createRateLimiter(maxRequests: number, windowMs: number, maxIps = 10000): RateLimitStore {
-  const store: RateLimitStore = {
-    ipRequests: new Map(),
-    maxRequests,
-    windowMs,
-    maxIps,
-  };
-
-  // Periodic cleanup every 5 minutes
-  setInterval(() => cleanExpiredEntries(store), 5 * 60 * 1000);
-
-  return store;
-}
-
-export function cleanExpiredEntries(store: RateLimitStore): void {
-  const now = Date.now();
-  for (const [ip, timestamps] of store.ipRequests) {
-    const valid = timestamps.filter((t) => now - t < store.windowMs);
-    if (valid.length === 0) {
-      store.ipRequests.delete(ip);
-    } else {
-      store.ipRequests.set(ip, valid);
-    }
+export function sweepExpired(limiter: RateLimiter, now = Date.now()): void {
+  for (const [key, timestamps] of limiter.hits) {
+    const recent = timestamps.filter((t) => now - t < limiter.windowMs);
+    if (recent.length === 0) limiter.hits.delete(key);
+    else limiter.hits.set(key, recent);
   }
 }
 
-export function isRateLimited(store: RateLimitStore, clientIp: string): boolean {
-  cleanExpiredEntries(store);
+/**
+ * Counts one request for `key`. Returns 0 when it is allowed, otherwise how many
+ * milliseconds remain until the oldest request in the window expires.
+ */
+export function consume(limiter: RateLimiter, key: string, now = Date.now()): number {
+  const recent = (limiter.hits.get(key) ?? []).filter((t) => now - t < limiter.windowMs);
 
-  const now = Date.now();
-  const timestamps = store.ipRequests.get(clientIp) || [];
-  const recent = timestamps.filter((t) => now - t < store.windowMs);
-
-  if (recent.length >= store.maxRequests) {
-    return true;
+  if (recent.length >= limiter.maxRequests) {
+    limiter.hits.set(key, recent);
+    const oldest = recent[0] ?? now;
+    return oldest + limiter.windowMs - now;
   }
 
   recent.push(now);
-
-  // Guard against unbounded growth
-  if (store.ipRequests.size >= store.maxIps && !store.ipRequests.has(clientIp)) {
-    const oldest = [...store.ipRequests.entries()].sort((a, b) => Math.min(...a[1]) - Math.min(...b[1]))[0];
-    if (oldest) store.ipRequests.delete(oldest[0]);
+  // Re-inserting moves the key to the end, so the first key is always the least
+  // recently seen one and the size bound evicts it without scanning.
+  limiter.hits.delete(key);
+  if (limiter.hits.size >= limiter.maxKeys) {
+    const leastRecent = limiter.hits.keys().next().value;
+    if (leastRecent !== undefined) limiter.hits.delete(leastRecent);
   }
-
-  store.ipRequests.set(clientIp, recent);
-  return false;
+  limiter.hits.set(key, recent);
+  return 0;
 }

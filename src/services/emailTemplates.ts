@@ -131,7 +131,7 @@ export function contactNotificationHtml(data: ContactNotificationData): string {
           <tr>
             <td style="padding:28px 0 0 0;" align="center">
               <p style="margin:0;font-size:12px;color:#4B5567;">
-                Este email fue generado automaticamente por
+                Este email fue generado automáticamente por
                 <a href="https://dtpf.es" style="color:#2DD4BF;text-decoration:none;">dtpf.es</a>
               </p>
             </td>

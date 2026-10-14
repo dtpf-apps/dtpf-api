@@ -62,8 +62,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Type-check source and tests
+        run: pnpm typecheck
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      # Unit and e2e projects together; the e2e suites run on a real MongoDB
+      # (mongodb-memory-server, binary cached under the runner's home), and the
+      # coverage thresholds in vitest.config.mts fail the job when they drop.
       - name: Run tests
-        run: pnpm test
+        run: pnpm test:coverage
 
       - name: Build TypeScript
         run: pnpm build
@@ -95,8 +104,11 @@ jobs:
           NODE_ENV_VAL: ${{ steps.env.outputs.node_env }}
         run: |
           DEPLOY_DIR="/html/$SERVICE_NAME/$TARGET"
-          RSYNC_SSH="ssh -o StrictHostKeyChecking=no -p $APP_SERVER_PORT"
-          SSH_CMD="ssh -o StrictHostKeyChecking=no -p $APP_SERVER_PORT $APP_SERVER"
+          # accept-new: the runner's persistent known_hosts already pins the app
+          # server, so a CHANGED host key now stops the deploy instead of being
+          # accepted silently; only a never-seen host is learned on first contact.
+          RSYNC_SSH="ssh -o StrictHostKeyChecking=accept-new -p $APP_SERVER_PORT"
+          SSH_CMD="ssh -o StrictHostKeyChecking=accept-new -p $APP_SERVER_PORT $APP_SERVER"
 
           rsync -az --delete --exclude='*.map' -e "$RSYNC_SSH" dist/ $APP_SERVER:$DEPLOY_DIR/src/
           rsync -az --delete -e "$RSYNC_SSH" .deploy/node_modules/ $APP_SERVER:$DEPLOY_DIR/node_modules/

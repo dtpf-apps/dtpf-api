@@ -1,6 +1,9 @@
+import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { canonicalHostMiddleware } from '../../src/middlewares/canonicalHost.middleware';
-import { createMockNext, createMockRequest } from '../helpers/mocks';
+
+const createMockRequest = (fields: { hostname?: string; originalUrl: string }) => fields as Request;
+const createMockNext = () => vi.fn();
 
 function createRedirectingResponse() {
   return { redirect: vi.fn() };

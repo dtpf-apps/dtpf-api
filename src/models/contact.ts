@@ -1,11 +1,12 @@
-import mongoose, { Schema } from 'mongoose';
-import { IContactDocument } from '../interfaces';
+import { Schema, model } from 'mongoose';
+import type { IContact } from '../interfaces';
+import { CONTACT_LIMITS } from '../schemas/contact.schema';
 
-const ContactSchema = new Schema<IContactDocument>({
-  email: { type: String, required: true, trim: true, maxlength: 254, index: true },
-  name: { type: String, default: '', trim: true, maxlength: 100 },
-  message: { type: String, required: true, trim: true, maxlength: 5000 },
+const ContactSchema = new Schema<IContact>({
+  email: { type: String, required: true, trim: true, maxlength: CONTACT_LIMITS.emailMax, index: true },
+  name: { type: String, default: '', trim: true, maxlength: CONTACT_LIMITS.nameMax },
+  message: { type: String, required: true, trim: true, maxlength: CONTACT_LIMITS.messageMax },
   date: { type: Date, default: Date.now },
 });
 
-export default mongoose.model<IContactDocument>('Contact', ContactSchema);
+export default model<IContact>('Contact', ContactSchema);

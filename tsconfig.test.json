@@ -1,0 +1,16 @@
+{
+  // Type-checks the suites together with the code they exercise. Vitest strips
+  // types without checking them, so without this a test could assert against a
+  // shape the code no longer has and still run green.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    // Vitest loads every suite as an ES module (top-level await included), not as CommonJS.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*", "test/**/*", "vitest.config.mts"],
+  "exclude": ["node_modules", "dist"]
+}
