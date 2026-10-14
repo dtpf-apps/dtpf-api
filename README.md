@@ -75,6 +75,7 @@ src/
 │   ├── contact.interface.ts
 │   └── index.ts
 ├── middlewares/
+│   ├── canonicalHost.middleware.ts    # 301 www.<host> → <host>
 │   ├── error.middleware.ts
 │   └── securityHeaders.middleware.ts  # CSP + security headers
 ├── models/
@@ -94,7 +95,7 @@ src/
 └── index.ts                     # Entry point: MongoDB connection, server start
 ```
 
-In production, the backend serves the pre-built frontend from a `client/` directory as static files with immutable asset caching and no-cache service worker headers. The catch-all serves a route's pre-rendered `client/<route>/index.html` (emitted by the frontend build with that page's own `<head>` tags) when it exists, and otherwise the SPA shell with a 404 status (every real page has a pre-rendered file, so a path without one is unknown; the client renders its not-found page); unknown `/api/*` paths return a JSON 404.
+In production, the backend serves the pre-built frontend from a `client/` directory as static files with immutable asset caching and no-cache service worker headers. The catch-all serves a route's pre-rendered `client/<route>/index.html` (emitted by the frontend build with that page's own `<head>` tags) when it exists, and otherwise the SPA shell with a 404 status (every real page has a pre-rendered file, so a path without one is unknown; the client renders its not-found page); unknown `/api/*` paths return a JSON 404. Every HTML response carries `Cache-Control: public, max-age=0, no-transform`: Cloudflare injects its Web Analytics beacon into HTML it proxies unless the origin sends `no-transform`, and the CSP would only block that script. A request for a `www.` host is answered with a 301 to the apex before anything else runs.
 
 ## API Endpoints
 
@@ -128,7 +129,7 @@ The email template matches the dtpf.es visual identity (dark background, Ocean T
 
 ## Testing
 
-82 tests across 7 files using Vitest 5. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, 21 tests, supertest with mocked MongoDB/email) runs via its own Vitest config.
+89 tests across 8 files using Vitest 5. Coverage thresholds: 70% (statements, branches, functions, lines). A separate e2e suite (`test/e2e/`, 24 tests, supertest with mocked MongoDB/email) runs via its own Vitest config.
 
 ```bash
 pnpm test

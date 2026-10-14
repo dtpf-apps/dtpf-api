@@ -11,6 +11,7 @@ import contactRoutes from './routers/contact';
 import utilsRoutes from './routers/utils';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { securityHeadersMiddleware } from './middlewares/securityHeaders.middleware';
+import { canonicalHostMiddleware } from './middlewares/canonicalHost.middleware';
 
 const app = express();
 
@@ -31,6 +32,9 @@ app.use(
     },
   })
 );
+
+// Before CORS and the security headers: a www request gets its 301 and nothing else.
+app.use(canonicalHostMiddleware);
 
 // CORS
 const allowedOrigins = ['http://localhost:3000', 'https://dtpf.es', 'https://dev.dtpf.es'];
@@ -84,6 +88,18 @@ function clientIsPrerendered(): boolean {
   return existsSync(path.join(clientDir, 'en', 'index.html'));
 }
 
+// Cloudflare rewrites HTML at the edge: it injects its Web Analytics beacon into every
+// page it proxies, and the CSP then blocks that script — one console error per page and
+// no analytics either way. `no-transform` is how an origin declines edge rewriting, and
+// Cloudflare documents that it does not inject into such a response, so the pages leave
+// here byte-exact. `public, max-age=0` is what `send` would have set on its own.
+const HTML_CACHE_CONTROL = 'public, max-age=0, no-transform';
+
+function htmlResponseHeaders(res: Response): void {
+  res.setHeader('Cache-Control', HTML_CACHE_CONTROL);
+  res.setHeader('CDN-Cache-Control', 'no-store');
+}
+
 if (process.env.NODE_ENV !== 'development') {
   app.use(
     '/assets',
@@ -102,8 +118,9 @@ if (process.env.NODE_ENV !== 'development') {
     '/',
     express.static(clientDir, {
       redirect: false,
-      setHeaders: (res) => {
-        res.setHeader('CDN-Cache-Control', 'no-store');
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) htmlResponseHeaders(res);
+        else res.setHeader('CDN-Cache-Control', 'no-store');
       },
     })
   );
@@ -113,6 +130,7 @@ if (process.env.NODE_ENV !== 'development') {
       return next(Object.assign(new Error(`No route for ${req.path}`), { status: 404 }));
     }
     const page = prerenderedPage(req.path);
+    htmlResponseHeaders(res);
     res
       .status(page || !clientIsPrerendered() ? 200 : 404)
       .sendFile(page ?? 'index.html', { root: clientDir });

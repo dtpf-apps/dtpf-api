@@ -315,6 +315,20 @@ describe('E2E: CORS headers', () => {
   });
 });
 
+describe('E2E: canonical host', () => {
+  it('301s a www host onto the apex over real HTTP, path and query kept', async () => {
+    const res = await request(app).get('/about?lang=en').set('Host', 'www.dtpf.es');
+    expect(res.status).toBe(301);
+    expect(res.headers.location).toBe('https://dtpf.es/about?lang=en');
+  });
+
+  it('answers the apex host itself, no redirect', async () => {
+    const res = await request(app).get('/api/v1/connection').set('Host', 'dtpf.es');
+    expect(res.status).toBe(200);
+    expect(res.headers.location).toBeUndefined();
+  });
+});
+
 describe('E2E: 404 handling', () => {
   it('unknown API route returns a JSON 404, never the SPA shell', async () => {
     const res = await request(app).get('/api/v1/nonexistent');
@@ -368,6 +382,22 @@ describe('E2E: SPA shell and pre-rendered routes', () => {
   it('serves the shell with a 404 for a path the build did not pre-render', async () => {
     expect(await html('/projects/anything', 404)).toContain('<title>shell</title>');
     expect(await html('/en/projects', 404)).toContain('<title>shell</title>');
+  });
+
+  it('sends every HTML response with no-transform, so the edge leaves the markup alone', async () => {
+    // Static index (`/`, `/about/`), catch-all page (`/about`) and the 404 shell all go
+    // through Cloudflare's HTML rewriter unless the origin declines it.
+    for (const [url, status] of [
+      ['/', 200],
+      ['/about/', 200],
+      ['/about', 200],
+      ['/projects/anything', 404],
+    ] as const) {
+      const res = await request(app).get(url);
+      expect(res.status, url).toBe(status);
+      expect(res.headers['cache-control'], url).toBe('public, max-age=0, no-transform');
+      expect(res.headers['cdn-cache-control'], url).toBe('no-store');
+    }
   });
 
   it('keeps the 200 shell for a client built without pre-rendered pages', async () => {

@@ -24,7 +24,7 @@ pnpm test:e2e        # E2E suite (vitest.e2e.config.mts, supertest)
 
 ### Testing
 
-Vitest 5 with globals. **82 tests** across 7 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; GitHub only receives a read-only push mirror).
+Vitest 5 with globals. **89 tests** across 8 unit test files. Coverage thresholds: 70% (statements, branches, functions, lines). Tests run in CI before deploy (Gitea Actions, `.gitea/workflows/deploy.yml`; GitHub only receives a read-only push mirror).
 
 `vite` is a direct devDependency even though this backend compiles with `tsc` and never bundles. It arrives as vitest's own dependency across a three-major range, and an override cannot move a version the lockfile already pins — so declaring it directly is what actually decides which major the test toolchain runs on. It is dev-only and the deploy prunes it.
 
@@ -36,12 +36,13 @@ test/
 │   ├── contact.test.ts               # 32 tests — all 5 anti-spam layers + validation + happy path
 │   └── utils.test.ts                 # 1 test — health check
 ├── middlewares/
+│   ├── canonicalHost.test.ts         # 7 tests — www.<host> → 301 apex, every other host passes
 │   ├── error.test.ts                 # 8 tests — error middleware
 │   └── securityHeaders.test.ts       # 2 tests — CSP + security headers
 ├── services/
 │   ├── email.test.ts                 # 8 tests — sendEmail retry logic, verifyEmailConnection
 │   └── emailTemplates.test.ts        # 11 tests — HTML generation, XSS escaping
-└── e2e/api.e2e.test.ts               # 21 tests — full HTTP cycle via supertest (pnpm test:e2e, own config)
+└── e2e/api.e2e.test.ts               # 24 tests — full HTTP cycle via supertest (pnpm test:e2e, own config)
 ```
 
 Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `vi.useFakeTimers()` for retry delays, unique IPs per test to avoid rate limit state leakage. The e2e suite points `CLIENT_DIR` (test-only override of the `client/` directory) at a throwaway fixture so the static block and the per-route HTML resolution run over real HTTP.
@@ -51,7 +52,7 @@ Key patterns: `vi.hoisted()` for mock variables used in `vi.mock()` factories, `
 ### Entry Flow
 
 `src/index.ts` connects to MongoDB, verifies email transporter, and starts Express server.
-`src/app.ts` configures middleware (JSON/urlencoded parsers with 16kb limit, compression, pino-http, CORS, security headers incl. CSP) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and a catch-all that serves the route's pre-rendered `client/<route>/index.html` (the frontend build emits one per route with that page's title, description, Open Graph and canonical tags) when it exists, and otherwise the SPA shell with a **404 status** — every real page has a pre-rendered file, so a path without one is unknown; the client still renders its not-found page, and a crawler never indexes a mistyped URL as a copy of the home (the shell is the home's pre-rendered head). Unknown `/api/*` paths get a JSON 404, never the shell.
+`src/app.ts` configures middleware (JSON/urlencoded parsers with 16kb limit, compression, pino-http, CORS, security headers incl. CSP) and mounts routes. In production, serves the frontend from `client/` with optimized static serving: `/assets` with 1-year immutable cache, `/service-worker.js` with no-cache headers, and a catch-all that serves the route's pre-rendered `client/<route>/index.html` (the frontend build emits one per route with that page's title, description, Open Graph and canonical tags) when it exists, and otherwise the SPA shell with a **404 status** — every real page has a pre-rendered file, so a path without one is unknown; the client still renders its not-found page, and a crawler never indexes a mistyped URL as a copy of the home (the shell is the home's pre-rendered head). Unknown `/api/*` paths get a JSON 404, never the shell. Every HTML response (static index, catch-all page, 404 shell) carries `Cache-Control: public, max-age=0, no-transform`: Cloudflare injects its Web Analytics beacon into the HTML it proxies, our CSP blocks that script (a console error per page, no analytics either way), and `no-transform` is the documented way an origin declines that edge rewriting. `canonicalHostMiddleware` runs before CORS and the security headers: Cloudflare and NPM forward `www.dtpf.es` to this same server, so a `www.` host gets a 301 to the apex instead of a second copy of the site.
 
 ### File Structure
 
@@ -67,6 +68,7 @@ src/
 │   ├── contact.interface.ts
 │   └── index.ts
 ├── middlewares/
+│   ├── canonicalHost.middleware.ts    # 301 www.<host> → https://<host>, path and query kept
 │   ├── error.middleware.ts
 │   └── securityHeaders.middleware.ts  # CSP + nosniff/frame/referrer/permissions headers
 ├── models/
