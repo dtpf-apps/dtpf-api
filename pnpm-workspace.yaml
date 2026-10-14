@@ -26,6 +26,9 @@ overrides:
   body-parser@<2.3.0: ^2.3.0 # express (asks ^2.2.1) — GHSA-v422-hmwv-36x6
   path-to-regexp: '>=8.4.0'
   form-data@>=4.0.0 <4.0.6: ^4.0.6
+  shell-quote@<1.11.0: ^1.11.0 # concurrently — GHSA-pqg4-j6r4-53mv
+  proxy-addr@<2.0.8: ^2.0.8 # express (5.3.0 asks ^2.0.8; 5.2 admitted older) — GHSA-jqcg-44mw-7w3h
+  source-map-js@<1.2.2: ^1.2.2 # vite > postcss — GHSA-68fv-2mgg-jv7q
 # vite is not listed here on purpose. It arrives as vitest's own dependency
 # (^6 || ^7 || ^8), and an override cannot move an already-locked version — a
 # plain install left it behind while reporting an unmet peer. Declaring it a
