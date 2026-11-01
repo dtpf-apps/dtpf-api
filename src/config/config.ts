@@ -15,6 +15,8 @@ const REQUIRED_WHEN_DEPLOYED = [
   'IP_MONGO_DB',
   'PORT_MONGO_DB',
   'DB_NAME',
+  'USER_MONGO_DB',
+  'PASS_MONGO_DB',
   'SMTP_HOST',
   'SMTP_USER',
   'SMTP_PASS',
@@ -32,6 +34,8 @@ const envSchema = z.object({
   IP_MONGO_DB: z.string().default('127.0.0.1'),
   PORT_MONGO_DB: port.default(27019),
   DB_NAME: z.string().default('dtpf'),
+  USER_MONGO_DB: z.string().optional(),
+  PASS_MONGO_DB: z.string().optional(),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: port.default(587),
   SMTP_USER: z.string().default(''),
@@ -49,6 +53,17 @@ export function loadConfig(source: NodeJS.ProcessEnv) {
     throw new Error(`Invalid environment:\n${z.prettifyError(parsed.error)}`);
   }
   const env = parsed.data;
+
+  // The shared MongoDB runs with access control: every app and environment signs in as its own
+  // user, created in its own database (so no authSource) and readWrite there only. A local mongod
+  // or the tests' in-memory server has no users, which is why development may leave the pair out.
+  if ((env.USER_MONGO_DB === undefined) !== (env.PASS_MONGO_DB === undefined)) {
+    throw new Error('USER_MONGO_DB and PASS_MONGO_DB go together: set both or neither');
+  }
+  const mongoAuth =
+    env.USER_MONGO_DB !== undefined && env.PASS_MONGO_DB !== undefined
+      ? `${encodeURIComponent(env.USER_MONGO_DB)}:${encodeURIComponent(env.PASS_MONGO_DB)}@`
+      : '';
 
   // Staging is a clone of production and runs the same way: same log level, same
   // certificate checks, same static serving. Only the data behind it differs.
@@ -77,7 +92,7 @@ export function loadConfig(source: NodeJS.ProcessEnv) {
       apiVersion: env.API_VERSION,
     },
     db: {
-      url: `mongodb://${env.IP_MONGO_DB}:${env.PORT_MONGO_DB}/${env.DB_NAME}`,
+      url: `mongodb://${mongoAuth}${env.IP_MONGO_DB}:${env.PORT_MONGO_DB}/${env.DB_NAME}`,
     },
     email: {
       // Without credentials there is nothing to send with: notifications are skipped, not failed.

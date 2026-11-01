@@ -6,6 +6,8 @@ const deployedEnv = {
   IP_MONGO_DB: '10.0.0.5',
   PORT_MONGO_DB: '27017',
   DB_NAME: 'dtpf',
+  USER_MONGO_DB: 'app',
+  PASS_MONGO_DB: 'not-a-real-mongo-password',
   SMTP_HOST: 'mail.example.com',
   SMTP_USER: 'contacto',
   SMTP_PASS: 'not-a-real-password',
@@ -37,7 +39,7 @@ describe('loadConfig', () => {
 
     expect(config.deployed).toBe(true);
     expect(config.log.level).toBe('info');
-    expect(config.db.url).toBe('mongodb://10.0.0.5:27017/dtpf');
+    expect(config.db.url).toBe('mongodb://app:not-a-real-mongo-password@10.0.0.5:27017/dtpf');
     expect(config.email).toMatchObject({
       enabled: true,
       host: 'mail.example.com',
@@ -58,7 +60,29 @@ describe('loadConfig', () => {
 
   it('refuses a deployed environment with variables missing, and names every one', () => {
     expect(() => loadConfig({ NODE_ENV: 'staging', SMTP_HOST: 'mail.example.com' })).toThrow(
-      'missing PORT_SERVER, IP_MONGO_DB, PORT_MONGO_DB, DB_NAME, SMTP_USER, SMTP_PASS, EMAIL_FROM, NOTIFICATION_TO'
+      'missing PORT_SERVER, IP_MONGO_DB, PORT_MONGO_DB, DB_NAME, USER_MONGO_DB, PASS_MONGO_DB, SMTP_USER, SMTP_PASS, EMAIL_FROM, NOTIFICATION_TO'
+    );
+  });
+
+  // The shared MongoDB runs with access control: every app and environment signs in as its own
+  // user, created in its own database (so no authSource). A local mongod or the tests' in-memory
+  // server has no users, which is why development may leave the pair out.
+  it('signs in to MongoDB with neither credential in the URL when development leaves them out', () => {
+    expect(loadConfig({ NODE_ENV: 'development' }).db.url).not.toContain('@');
+  });
+
+  it('percent-encodes characters that would otherwise end the userinfo', () => {
+    const config = loadConfig({ ...deployedEnv, USER_MONGO_DB: 'a@p:p', PASS_MONGO_DB: 'p@ss:w/rd?#%' });
+
+    expect(config.db.url).toBe('mongodb://a%40p%3Ap:p%40ss%3Aw%2Frd%3F%23%25@10.0.0.5:27017/dtpf');
+  });
+
+  it('refuses one MongoDB credential without the other, even in development', () => {
+    expect(() => loadConfig({ NODE_ENV: 'development', USER_MONGO_DB: 'app' })).toThrow(
+      'USER_MONGO_DB and PASS_MONGO_DB go together'
+    );
+    expect(() => loadConfig({ NODE_ENV: 'development', PASS_MONGO_DB: 'secret' })).toThrow(
+      'USER_MONGO_DB and PASS_MONGO_DB go together'
     );
   });
 

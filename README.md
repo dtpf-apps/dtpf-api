@@ -62,6 +62,8 @@ Development needs no env file: every variable has a local default (below). Copy 
 | `IP_MONGO_DB`         | MongoDB host                                             | `127.0.0.1`         |
 | `PORT_MONGO_DB`       | MongoDB port                                             | `27019`             |
 | `DB_NAME`             | Database name                                            | `dtpf`              |
+| `USER_MONGO_DB`       | This environment's own MongoDB user (in `DB_NAME`)       | none                |
+| `PASS_MONGO_DB`       | Its password; both or neither                            | none                |
 | `SMTP_HOST`           | Stalwart Mail Server host                                | `localhost`         |
 | `SMTP_PORT`           | SMTP submission port (STARTTLS required; 465 = implicit) | `587`               |
 | `SMTP_USER`           | SMTP auth username; empty skips notifications            | empty               |

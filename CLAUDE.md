@@ -156,6 +156,8 @@ Defaults apply in development and test only; staging and production must set eve
 | `IP_MONGO_DB`         | yes               | `127.0.0.1`         | MongoDB host                                          |
 | `PORT_MONGO_DB`       | yes               | `27019`             | MongoDB port                                          |
 | `DB_NAME`             | yes               | `dtpf`              | Database name                                         |
+| `USER_MONGO_DB`       | yes               | none                | Own MongoDB user, readWrite on `DB_NAME` only         |
+| `PASS_MONGO_DB`       | yes               | none                | Its password; development: both or neither            |
 | `SMTP_HOST`           | yes               | `localhost`         | Stalwart Mail Server host                             |
 | `SMTP_PORT`           | no                | `587`               | SMTP submission port (465 = implicit TLS)             |
 | `SMTP_USER`           | yes               | empty               | SMTP auth username (without domain); empty = no email |
