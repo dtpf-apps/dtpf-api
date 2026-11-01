@@ -1,6 +1,6 @@
 {
   "name": "dtpf-api",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Contact-form API behind dtpf.es, the personal portfolio of David T. Pizarro Frick",
   "main": "dist/index.js",
   "author": "David T. Pizarro Frick",

@@ -146,22 +146,4 @@ Email template matches the dtpf.es visual identity (dark bg, Ocean Teal accents,
 
 ## Environment Variables
 
-Defaults apply in development and test only; staging and production must set every variable marked required (startup refuses otherwise).
-
-| Variable              | Required deployed | Development default | Description                                           |
-| --------------------- | ----------------- | ------------------- | ----------------------------------------------------- |
-| `NODE_ENV`            | yes (PM2 sets it) | `development`       | `development`, `test`, `staging` or `production`      |
-| `API_VERSION`         | no                | `v1`                | API version prefix                                    |
-| `PORT_SERVER`         | yes               | `3998`              | Express port                                          |
-| `IP_MONGO_DB`         | yes               | `127.0.0.1`         | MongoDB host                                          |
-| `PORT_MONGO_DB`       | yes               | `27019`             | MongoDB port                                          |
-| `DB_NAME`             | yes               | `dtpf`              | Database name                                         |
-| `USER_MONGO_DB`       | yes               | none                | Own MongoDB user, readWrite on `DB_NAME` only         |
-| `PASS_MONGO_DB`       | yes               | none                | Its password; development: both or neither            |
-| `SMTP_HOST`           | yes               | `localhost`         | Stalwart Mail Server host                             |
-| `SMTP_PORT`           | no                | `587`               | SMTP submission port (465 = implicit TLS)             |
-| `SMTP_USER`           | yes               | empty               | SMTP auth username (without domain); empty = no email |
-| `SMTP_PASS`           | yes               | empty               | SMTP auth password                                    |
-| `SMTP_TLS_SERVERNAME` | if host is an IP  | the SMTP host       | Hostname the SMTP certificate was issued for          |
-| `EMAIL_FROM`          | yes               | `contacto@dtpf.es`  | Sender email address                                  |
-| `NOTIFICATION_TO`     | yes               | `dtpf@dtpf.es`      | Where to receive contact notifications                |
+Every variable, its development default and which ones staging and production must set: `README.md` § Environment Variables. `src/config/config.ts` validates them at startup; a deployed process missing one refuses to start and names it.
